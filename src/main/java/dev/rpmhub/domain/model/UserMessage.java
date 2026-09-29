@@ -39,4 +39,12 @@ public class UserMessage extends Message {
         this.user = user;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getType() {
+        return "USER";
+    }
+
 }

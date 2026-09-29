@@ -9,6 +9,7 @@
  */
 package dev.rpmhub.domain.port.out;
 
+import java.util.List;
 import java.util.Optional;
 
 import dev.rpmhub.domain.model.Chat;
@@ -34,5 +35,29 @@ public interface Repository {
      * @param chat the chat to persist
      */
     void save(Chat chat);
+
+    /**
+     * Finds a chat/conversation by its unique identifier.
+     *
+     * @param id the chat id
+     * @return the chat, or empty when no chat with that id exists
+     */
+    Optional<Chat> findConversationById(String id);
+
+    /**
+     * Finds all chats/conversations owned by the given Orion Users hash, most recently
+     * started first.
+     *
+     * @param orionUserHash the Orion Users hash that identifies the owner
+     * @return the owner's chats, in reverse chronological order
+     */
+    List<Chat> findAllByOrionUserHash(String orionUserHash);
+
+    /**
+     * Deletes the chat/conversation with the given identifier, if it exists.
+     *
+     * @param id the chat id to delete
+     */
+    void deleteConversation(String id);
 
 }

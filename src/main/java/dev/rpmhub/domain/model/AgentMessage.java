@@ -16,4 +16,12 @@ package dev.rpmhub.domain.model;
  */
 public class AgentMessage extends Message {
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getType() {
+        return "AGENT";
+    }
+
 }

@@ -129,22 +129,44 @@ nano .env   # preencha DOMAIN, ACME_EMAIL, POSTGRES_PASSWORD, WHATSAPP_*, OPENAI
 Variáveis obrigatórias em `.env`:
 - `DOMAIN` — o domínio apontado no passo 2 (ex.: `twr.example.com`)
 - `ACME_EMAIL` — e-mail usado pelo Caddy no registro do Let's Encrypt
-- `POSTGRES_PASSWORD` — senha forte para o banco
+- `POSTGRES_PASSWORD` — senha forte para o banco (compartilhado entre `twr` e `orion-users`)
 - `OPENAI_API_KEY` — usada como modelo de chat em produção (`gpt-4o-mini`); gere em
   [platform.openai.com](https://platform.openai.com/api-keys)
+- `VITE_ORION_USERS_URL` — **`https://<DOMAIN>/orion-users`** (mesmo domínio/TLS do app,
+  ver `Caddyfile`). Precisa do valor final de `DOMAIN` já definido, pois é embutido no
+  bundle do frontend no momento do build (`docker compose build`).
+- `QUARKUS_MAILER_FROM` e `QUARKUS_MAILER_USERNAME` — endereço Gmail usado pelo
+  Orion Users (o padrão upstream é `devoriontest@gmail.com`)
+- `QUARKUS_MAILER_PASSWORD` — senha de aplicativo do Google (nunca a senha normal
+  da conta)
+- `ORION_USERS_EMAIL_VALIDATION_URL` —
+  **`https://<DOMAIN>/orion-users/users/validateEmail`**, link público incluído nos
+  e-mails de confirmação
 
-Variáveis opcionais (deixe em branco para desabilitar a feature):
+Variáveis opcionais (deixe em branco/padrão para desabilitar a feature ou usar o default):
 - `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_VERIFY_TOKEN`, `WHATSAPP_APP_SECRET`
+- `ORION_USERS_HOST_PORT` (padrão `8082`) — acesso direto ao Orion Users pela instância,
+  útil para depuração manual (o Security Group só abre 80/443/22, então isso não expõe
+  a porta para a internet)
+- `QUARKUS_MAILER_MOCK` (padrão `false`) — use `true` apenas para desabilitar o envio
+  real de e-mails
+- `VITE_GOOGLE_CLIENT_ID` — habilita "Entrar com Google" na tela de login
 
 ## 5. Build e subida do stack
+
+O `src/main/docker/Dockerfile.jvm` compila o frontend (Vue) e o backend (Quarkus) a
+partir do código-fonte — não é preciso rodar `./mvnw package` manualmente antes.
 
 ```bash
 sudo usermod -aG docker ec2-user   # se ainda não estiver no grupo docker (relogar depois)
 newgrp docker
 
-./mvnw package -DskipTests
 docker compose -p twr up -d --build
 ```
+
+Isso sobe toda a stack, incluindo o `orion-users` (serviço de login/cadastro/2FA,
+construído diretamente de `github.com/orion-services/users`, compartilhando o mesmo
+Postgres do `twr`).
 
 O `-p twr` fixa o nome do projeto Compose — importante para que o deploy
 automático via CI (passo 8) reutilize os mesmos containers/volumes, mesmo

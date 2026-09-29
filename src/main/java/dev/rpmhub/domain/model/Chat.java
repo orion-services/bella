@@ -51,6 +51,12 @@ public class Chat {
     private Date startedAt;
 
     /**
+     * Human-readable title of the chat/conversation, set by the owner (web channel only;
+     * WhatsApp chats have no title).
+     */
+    private String title;
+
+    /**
      * Starts a new empty chat for the given user.
      *
      * @param user the user that owns the chat
@@ -229,6 +235,24 @@ public class Chat {
      */
     public void setStartedAt(Date startedAt) {
         this.startedAt = startedAt;
+    }
+
+    /**
+     * Returns the conversation title.
+     *
+     * @return the title, or {@code null} when not set (e.g. WhatsApp chats)
+     */
+    public String getTitle() {
+        return title;
+    }
+
+    /**
+     * Sets the conversation title.
+     *
+     * @param title the title to set
+     */
+    public void setTitle(String title) {
+        this.title = title;
     }
 
 }
