@@ -54,5 +54,13 @@ jobs:
             exit 1
           }
 
-      - name: Deploy stack
+      - name: Validate Compose configuration
+        run: docker compose -p twr --env-file /opt/twr/.env config --quiet
+
+      - name: Deploy application services
         run: docker compose -p twr --env-file /opt/twr/.env up -d --build twr orion-users
+
+      # Caddy does not automatically reload a bind-mounted Caddyfile. Recreate
+      # it on every deploy so proxy route changes become effective.
+      - name: Reload reverse proxy
+        run: docker compose -p twr --env-file /opt/twr/.env up -d --force-recreate caddy
