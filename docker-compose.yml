@@ -45,6 +45,7 @@ services:
       - ACME_EMAIL=${ACME_EMAIL:?set ACME_EMAIL in .env for Let's Encrypt registration}
     depends_on:
       - twr
+      - orion-users
 
   twr:
     build:
@@ -109,7 +110,7 @@ services:
     ports:
       # Direct host access — convenient for local dev (VITE_ORION_USERS_URL=
       # http://localhost:8082). Harmless in prod: the EC2 security group only opens
-      # 80/443/22 (see infra/terraform), so this port stays unreachable from the
+      # 80/443 (see infra/terraform), so this port stays unreachable from the
       # internet there; production browsers use the Caddy route instead (see Caddyfile).
       - "${ORION_USERS_HOST_PORT:-8082}:8080"
     environment:

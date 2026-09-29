@@ -242,15 +242,15 @@ volume de dados e pula o registro se o runner já estiver configurado.
 
 Já existe em [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml):
 dispara em todo push na `main` (ou manualmente, em **Actions -> Deploy to AWS
--> Run workflow**), confere que o JDK é o 25, faz `./mvnw package -DskipTests` e
-`docker compose -p twr --env-file /opt/twr/.env up -d --build twr`,
-reutilizando o `.env` já configurado manualmente em `/opt/twr/.env` (passo
-4) — o `.env` nunca entra no repositório nem em secrets do GitHub. O caminho
-fixo é necessário porque o `actions/checkout` limpa arquivos não versionados
-no diretório de trabalho do runner a cada execução (o `.env`, sendo
-`.gitignore`d, seria apagado se estivesse dentro do checkout). O `-p twr`
-garante que o CI atualiza os mesmos containers/volumes do deploy manual,
-mesmo rodando de um diretório diferente (o runner faz checkout em seu
+-> Run workflow**), valida a configuração do Compose, reconstrói `twr` e
+`orion-users` e recria o `caddy` para carregar eventuais mudanças no
+`Caddyfile`. O workflow reutiliza o `.env` já configurado manualmente em
+`/opt/twr/.env` (passo 4) — o `.env` nunca entra no repositório nem em secrets
+do GitHub. O caminho fixo é necessário porque o `actions/checkout` limpa
+arquivos não versionados no diretório de trabalho do runner a cada execução
+(o `.env`, sendo `.gitignore`d, seria apagado se estivesse dentro do checkout).
+O `-p twr` garante que o CI atualiza os mesmos containers/volumes do deploy
+manual, mesmo rodando de um diretório diferente (o runner faz checkout em seu
 próprio `_work/`, não em `/opt/twr`).
 
 ### 8.3 Nota de segurança
@@ -266,7 +266,7 @@ código não confiável de pushes diretos.
 |------|---------|
 | Ver logs | `docker compose -p twr logs -f [servico]` |
 | Reiniciar um serviço | `docker compose -p twr restart twr` |
-| Atualizar o app (deploy manual, sem esperar o CI) | `git pull && ./mvnw package -DskipTests && docker compose -p twr up -d --build twr` |
+| Atualizar toda a aplicação (deploy manual) | `git pull && docker compose -p twr --env-file /opt/twr/.env up -d --build twr orion-users && docker compose -p twr --env-file /opt/twr/.env up -d --force-recreate caddy` |
 | Parar tudo | `docker compose -p twr down` |
 | Destruir a infra AWS | `cd infra/terraform && terraform destroy` |
 
