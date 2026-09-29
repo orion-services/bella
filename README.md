@@ -18,6 +18,50 @@ You can run your application in dev mode that enables live coding using:
 
 > **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at <http://localhost:8080/q/dev/>.
 
+### Frontend (Vue) + Orion Users (auth) in dev
+
+The web UI (`frontend/`) authenticates against Orion Users (login/registration/2FA),
+an external service that is **not** part of this repo and must be running for
+login/signup to work — see `docker-compose.yml` (service `orion-users`, built from
+[orion-services/users](https://github.com/orion-services/users)).
+
+```shell script
+# 1. Start Orion Users (+ its own Postgres/Redis, independent from Quarkus Dev
+#    Services used by `quarkus:dev`). Requires a .env — see .env.example.
+cp .env.example .env    # fill in POSTGRES_PASSWORD and Gmail SMTP credentials;
+                        # use the local ORION_USERS_EMAIL_VALIDATION_URL shown there
+docker compose up -d postgres redis orion-users
+# Orion Users is now reachable at http://localhost:8082 (ORION_USERS_HOST_PORT)
+
+# 2. Create frontend/.env once (see the warning below for why this matters)
+cd frontend && cp .env.example .env && cd ..   # VITE_ORION_USERS_URL already defaults to http://localhost:8082
+
+# 3. Run the Quarkus backend as usual — no separate frontend server needed.
+./mvnw quarkus:dev
+```
+
+`./mvnw quarkus:dev` already builds the Vue app (`frontend-maven-plugin` runs
+`npm install` + `npm run build` on startup) and embeds it into
+`src/main/resources/META-INF/resources/`, served by Quarkus itself on
+<http://localhost:8080>. **There is no need to run a separate `npm run dev` /
+Vite dev server** for normal usage.
+
+The tradeoff: that build only happens once, when `quarkus:dev` starts. If you
+edit anything under `frontend/src/**` while `quarkus:dev` is already running,
+restart it (`Ctrl+C` then `./mvnw quarkus:dev` again) to rebuild and pick up
+the change — Quarkus's live-reload only watches `src/main/java` and
+`src/main/resources`, not `frontend/src`.
+
+If you *do* want instant hot-reload while actively developing Vue components,
+you can optionally run a separate Vite dev server instead (`cd frontend && npm
+run dev`, served at `http://localhost:5173`, proxying API calls to `:8080`) —
+but that's a pure convenience for frontend-only iteration, not required.
+
+If `frontend/.env` is missing, `VITE_ORION_USERS_URL` silently falls back to
+`http://localhost:8080` — **TWR's own port** — and every login/signup call 404s
+against the Quarkus backend instead of reaching Orion Users. Always create
+`frontend/.env` from `frontend/.env.example` before testing the web UI locally.
+
 ## Packaging and running the application
 
 The application can be packaged using:

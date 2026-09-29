@@ -2,20 +2,31 @@
 # Production stack for twr — meant to run on a single EC2 instance.
 #
 # Services:
-#   caddy    - reverse proxy, automatic HTTPS (Let's Encrypt) for DOMAIN
-#   twr     - the Quarkus app itself (this repo), built from src/main/docker/Dockerfile.jvm.
-#              Runs the "prod" Quarkus profile, which uses OpenAI (gpt-4o-mini) as the chat
-#              model instead of Ollama (see application.properties) — no local LLM runtime
-#              needed on the instance.
-#   postgres - pgvector-enabled Postgres, chat persistence + embeddings storage
-#   redis    - conversation memory store
+#   caddy        - reverse proxy, automatic HTTPS (Let's Encrypt) for DOMAIN
+#   twr          - the Quarkus app itself (this repo), built from src/main/docker/Dockerfile.jvm.
+#                  Runs the "prod" Quarkus profile, which uses OpenAI (gpt-4o-mini) as the chat
+#                  model instead of Ollama (see application.properties) — no local LLM runtime
+#                  needed on the instance.
+#   postgres     - pgvector-enabled Postgres, chat persistence + embeddings storage
+#   redis        - conversation memory store
+#   orion-users  - external auth service (login/registration/2FA) that issues the JWTs the
+#                  frontend sends to twr (see mp.jwt.verify.* in application.properties).
+#                  Shares the same Postgres instance/database as twr (its own tables,
+#                  managed by its own Hibernate/import.sql — no migration conflict with twr's
+#                  Flyway-managed schema). Reachable either directly on
+#                  ORION_USERS_HOST_PORT (handy for local dev, VITE_ORION_USERS_URL=
+#                  http://localhost:8082) or through Caddy at https://$DOMAIN/orion-users
+#                  (used in prod, see Caddyfile — required because the browser can't call a
+#                  plain-HTTP port from an HTTPS page).
 #
 # Usage (on the EC2 instance, after cloning this repo and creating a .env file
 # from .env.example — see docs/aws.md for the full walkthrough):
 #
-#   ./mvnw package -DskipTests
 #   docker compose up -d --build
 #
+# src/main/docker/Dockerfile.jvm is a multi-stage build that compiles both the Vue
+# frontend (frontend/) and the Quarkus app from source, so no separate `./mvnw
+# package` step is needed before this.
 ####
 
 services:
@@ -39,6 +50,12 @@ services:
     build:
       context: .
       dockerfile: src/main/docker/Dockerfile.jvm
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
+        # Local dev: http://localhost:${ORION_USERS_HOST_PORT:-8082}
+        # Prod (through Caddy, same TLS cert as the app): https://${DOMAIN}/orion-users
+        VITE_ORION_USERS_URL: ${VITE_ORION_USERS_URL:?set VITE_ORION_USERS_URL in .env}
+        VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-}
     restart: unless-stopped
     environment:
       QUARKUS_PROFILE: prod
@@ -84,6 +101,36 @@ services:
     restart: unless-stopped
     volumes:
       - redis_data:/data
+
+  orion-users:
+    build:
+      context: https://github.com/orion-services/users.git#main
+    restart: unless-stopped
+    ports:
+      # Direct host access — convenient for local dev (VITE_ORION_USERS_URL=
+      # http://localhost:8082). Harmless in prod: the EC2 security group only opens
+      # 80/443/22 (see infra/terraform), so this port stays unreachable from the
+      # internet there; production browsers use the Caddy route instead (see Caddyfile).
+      - "${ORION_USERS_HOST_PORT:-8082}:8080"
+    environment:
+      QUARKUS_DEVSERVICES_ENABLED: "false"
+      QUARKUS_DATASOURCE_REACTIVE_URL: postgresql://${POSTGRES_USER:-twr}:${POSTGRES_PASSWORD}@postgres:5432/twr
+      QUARKUS_DATASOURCE_USERNAME: ${POSTGRES_USER:-twr}
+      QUARKUS_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      # Real Gmail SMTP in both dev and production. Use a Google App Password,
+      # never the account's regular password.
+      QUARKUS_MAILER_MOCK: "${QUARKUS_MAILER_MOCK:-false}"
+      # Host, port, TLS, sender and username already have Gmail defaults in
+      # Orion Users. These native Quarkus variables allow optional overrides.
+      QUARKUS_MAILER_FROM: ${QUARKUS_MAILER_FROM:-devoriontest@gmail.com}
+      QUARKUS_MAILER_USERNAME: ${QUARKUS_MAILER_USERNAME:-devoriontest@gmail.com}
+      QUARKUS_MAILER_PASSWORD: ${QUARKUS_MAILER_PASSWORD:-}
+      # Dev default points to Orion's published port. Production must override
+      # this with https://${DOMAIN}/orion-users/users/validateEmail.
+      USERS_EMAIL_VALIDATION_URL: ${ORION_USERS_EMAIL_VALIDATION_URL:-http://localhost:8082/users/validateEmail}
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
   postgres_data:

@@ -11,8 +11,10 @@ package dev.rpmhub.adapter.config;
 
 import dev.rpmhub.adapter.out.ai.TwrAgent;
 import dev.rpmhub.application.ChatService;
+import dev.rpmhub.application.ConversationService;
 import dev.rpmhub.application.IngestService;
 import dev.rpmhub.domain.port.in.ChatUseCase;
+import dev.rpmhub.domain.port.in.ConversationUseCase;
 import dev.rpmhub.domain.port.in.IngestDocumentsPort;
 import dev.rpmhub.domain.port.out.EmbeddingRepository;
 import dev.rpmhub.domain.port.out.IngestPort;
@@ -78,6 +80,18 @@ public class ApplicationBeans {
         long inactivityThresholdMs = chatInactivityThresholdMinutes * 60_000L;
         return new ChatService(chatRepository, embeddingRepository, twrAgent, ragMaxResults, ragMinScore,
                 inactivityThresholdMs);
+    }
+
+    /**
+     * Produces the {@link ConversationUseCase} bean backed by a plain
+     * {@link ConversationService}, used by the authenticated web chat flow.
+     *
+     * @return the conversation use case implementation
+     */
+    @Produces
+    @ApplicationScoped
+    public ConversationUseCase conversationUseCase() {
+        return new ConversationService(chatRepository, embeddingRepository, twrAgent, ragMaxResults, ragMinScore);
     }
 
     /**

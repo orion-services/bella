@@ -3,7 +3,15 @@
 }
 
 {$DOMAIN} {
-	reverse_proxy twr:8080
+	# Orion Users (login/registration/2FA), same TLS cert/domain as the app itself.
+	# VITE_ORION_USERS_URL in prod must be https://{$DOMAIN}/orion-users (see docker-compose.yml).
+	handle_path /orion-users/* {
+		reverse_proxy orion-users:8080
+	}
+
+	handle {
+		reverse_proxy twr:8080
+	}
 
 	encode gzip
 

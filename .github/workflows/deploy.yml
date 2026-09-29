@@ -9,13 +9,19 @@
 #
 # Requires a `.env` file already present at /opt/twr/.env on the instance
 # (created once, manually, per docs/aws.md step 4) with all required
-# production secrets (POSTGRES_PASSWORD, OPENAI_API_KEY, DOMAIN, etc.). This
-# path is independent from the runner's own checkout directory, and is never
+# production secrets (POSTGRES_PASSWORD, OPENAI_API_KEY, DOMAIN, VITE_ORION_USERS_URL,
+# QUARKUS_MAILER_USERNAME, QUARKUS_MAILER_PASSWORD, etc. — see .env.example).
+# This path is independent from the runner's own checkout directory, and is never
 # touched by `actions/checkout` (which wipes untracked files on each run).
 #
 # `-p twr` pins the Compose project name so this run reuses the same
 # containers/volumes as the initial manual deploy in /opt/twr, even though
 # the runner checks out the repo into its own separate work directory.
+#
+# The jar is no longer pre-built on the runner: src/main/docker/Dockerfile.jvm is a
+# multi-stage build that compiles the Vue frontend and the Quarkus app from source
+# (see the "frontend" and "jvm-build" stages), so `docker compose ... --build` alone
+# is enough.
 ####
 name: Deploy to AWS
 
@@ -35,9 +41,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Check Java 25
-        run: java -version 2>&1 | tee /dev/stderr | grep -q 'version "25'
-
       - name: Check Docker buildx
         run: |
           docker buildx version
@@ -51,8 +54,5 @@ jobs:
             exit 1
           }
 
-      - name: Build jar
-        run: ./mvnw package -DskipTests
-
       - name: Deploy stack
-        run: docker compose -p twr --env-file /opt/twr/.env up -d --build twr
+        run: docker compose -p twr --env-file /opt/twr/.env up -d --build twr orion-users

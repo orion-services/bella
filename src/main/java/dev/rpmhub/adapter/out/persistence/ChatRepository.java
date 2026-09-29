@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import dev.rpmhub.adapter.out.persistence.entity.AgentMessageEntity;
 import dev.rpmhub.adapter.out.persistence.entity.ChatEntity;
@@ -54,8 +55,10 @@ public class ChatRepository implements Repository, PanacheRepositoryBase<ChatEnt
     @Override
     @Transactional
     public void save(Chat chat) {
-        if (chat == null || chat.getUser() == null || chat.getUser().getPhoneNumber() == null) {
-            throw new IllegalArgumentException("Chat must have a user with a phone number");
+        if (chat == null || chat.getUser() == null
+                || (chat.getUser().getPhoneNumber() == null && chat.getUser().getOrionUserHash() == null)) {
+            throw new IllegalArgumentException(
+                    "Chat must have a user with a phone number or an Orion Users hash");
         }
 
         ChatEntity entity = findById(chat.getId());
@@ -66,6 +69,9 @@ public class ChatRepository implements Repository, PanacheRepositoryBase<ChatEnt
         }
 
         entity.setPhoneNumber(chat.getUser().getPhoneNumber());
+        entity.setOrionUserHash(chat.getUser().getOrionUserHash());
+        entity.setUserEmail(chat.getUser().getEmail());
+        entity.setTitle(chat.getTitle());
         entity.setStartedAt(toInstant(chat.getStartedAt()));
         entity.getMessages().clear();
 
@@ -83,6 +89,37 @@ public class ChatRepository implements Repository, PanacheRepositoryBase<ChatEnt
             messageEntity.setSequence(i);
             entity.getMessages().add(messageEntity);
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional
+    public Optional<Chat> findConversationById(String id) {
+        return Optional.ofNullable(findById(id)).map(this::toDomain);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional
+    public List<Chat> findAllByOrionUserHash(String orionUserHash) {
+        return find("orionUserHash = ?1 order by startedAt desc", orionUserHash)
+                .<ChatEntity>list()
+                .stream()
+                .map(this::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional
+    public void deleteConversation(String id) {
+        deleteById(id);
     }
 
     /**
@@ -107,10 +144,13 @@ public class ChatRepository implements Repository, PanacheRepositoryBase<ChatEnt
     private Chat toDomain(ChatEntity entity) {
         User user = new User();
         user.setPhoneNumber(entity.getPhoneNumber());
+        user.setOrionUserHash(entity.getOrionUserHash());
+        user.setEmail(entity.getUserEmail());
 
         Chat chat = new Chat();
         chat.setId(entity.getId());
         chat.setUser(user);
+        chat.setTitle(entity.getTitle());
         chat.setStartedAt(toDate(entity.getStartedAt()));
 
         List<Message> messages = new ArrayList<>();

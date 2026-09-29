@@ -170,6 +170,11 @@ class ChatServiceTest {
          */
         private final ConcurrentMap<String, Chat> chatsByPhone = new ConcurrentHashMap<>();
 
+        /**
+         * All chats indexed by id, used by the conversation-based (web) methods.
+         */
+        private final ConcurrentMap<String, Chat> chatsById = new ConcurrentHashMap<>();
+
         @Override
         public Optional<Chat> findLastByPhone(String phoneNumber) {
             return Optional.ofNullable(chatsByPhone.get(phoneNumber));
@@ -177,7 +182,27 @@ class ChatServiceTest {
 
         @Override
         public void save(Chat chat) {
-            chatsByPhone.put(chat.getUser().getPhoneNumber(), chat);
+            if (chat.getUser().getPhoneNumber() != null) {
+                chatsByPhone.put(chat.getUser().getPhoneNumber(), chat);
+            }
+            chatsById.put(chat.getId(), chat);
+        }
+
+        @Override
+        public Optional<Chat> findConversationById(String id) {
+            return Optional.ofNullable(chatsById.get(id));
+        }
+
+        @Override
+        public List<Chat> findAllByOrionUserHash(String orionUserHash) {
+            return chatsById.values().stream()
+                    .filter(c -> orionUserHash.equals(c.getUser().getOrionUserHash()))
+                    .collect(java.util.stream.Collectors.toList());
+        }
+
+        @Override
+        public void deleteConversation(String id) {
+            chatsById.remove(id);
         }
     }
 

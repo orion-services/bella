@@ -39,10 +39,30 @@ public class ChatEntity {
     private String id;
 
     /**
-     * Phone number that identifies the chat owner.
+     * Phone number that identifies the chat owner (WhatsApp channel). Null for chats
+     * created through the authenticated web channel.
      */
-    @Column(name = "phone_number", nullable = false, length = 32)
+    @Column(name = "phone_number", length = 32)
     private String phoneNumber;
+
+    /**
+     * Orion Users hash that identifies the chat owner (web channel). Null for chats
+     * created through the WhatsApp channel.
+     */
+    @Column(name = "orion_user_hash", length = 128)
+    private String orionUserHash;
+
+    /**
+     * Email of the chat owner, as reported by the Orion Users JWT (web channel only).
+     */
+    @Column(name = "user_email", length = 255)
+    private String userEmail;
+
+    /**
+     * Human-readable title of the conversation (web channel only).
+     */
+    @Column(name = "title", length = 255)
+    private String title;
 
     /**
      * Instant when this chat was started.
@@ -91,6 +111,60 @@ public class ChatEntity {
      */
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
+    }
+
+    /**
+     * Returns the owner's Orion Users hash.
+     *
+     * @return the Orion Users hash
+     */
+    public String getOrionUserHash() {
+        return orionUserHash;
+    }
+
+    /**
+     * Sets the owner's Orion Users hash.
+     *
+     * @param orionUserHash the Orion Users hash to set
+     */
+    public void setOrionUserHash(String orionUserHash) {
+        this.orionUserHash = orionUserHash;
+    }
+
+    /**
+     * Returns the owner's email.
+     *
+     * @return the email
+     */
+    public String getUserEmail() {
+        return userEmail;
+    }
+
+    /**
+     * Sets the owner's email.
+     *
+     * @param userEmail the email to set
+     */
+    public void setUserEmail(String userEmail) {
+        this.userEmail = userEmail;
+    }
+
+    /**
+     * Returns the conversation title.
+     *
+     * @return the title
+     */
+    public String getTitle() {
+        return title;
+    }
+
+    /**
+     * Sets the conversation title.
+     *
+     * @param title the title to set
+     */
+    public void setTitle(String title) {
+        this.title = title;
     }
 
     /**
