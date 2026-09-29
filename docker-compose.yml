@@ -115,7 +115,9 @@ services:
       - "${ORION_USERS_HOST_PORT:-8082}:8080"
     environment:
       QUARKUS_DEVSERVICES_ENABLED: "false"
-      QUARKUS_DATASOURCE_REACTIVE_URL: postgresql://${POSTGRES_USER:-twr}:${POSTGRES_PASSWORD}@postgres:5432/twr
+      # Keep credentials out of the URI so passwords containing reserved URL
+      # characters remain valid and are not leaked by URI parsing errors.
+      QUARKUS_DATASOURCE_REACTIVE_URL: postgresql://postgres:5432/twr
       QUARKUS_DATASOURCE_USERNAME: ${POSTGRES_USER:-twr}
       QUARKUS_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       # Real Gmail SMTP in both dev and production. Use a Google App Password,
