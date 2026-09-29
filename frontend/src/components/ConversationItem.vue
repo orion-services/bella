@@ -1,18 +1,17 @@
 <template>
   <v-list-item>
-    <v-list-item-content>
-      <v-list-item-title>{{ conversation.title }}</v-list-item-title>
-      <v-list-item-subtitle>
-        Created at: {{ formatDate(conversation.createdAt) }}
-        <span v-if="conversation.lastActivity">
-          | Last activity: {{ formatDate(conversation.lastActivity) }}
-        </span>
-      </v-list-item-subtitle>
-    </v-list-item-content>
-    <v-list-item-action>
+    <v-list-item-title>{{ conversation.title }}</v-list-item-title>
+    <v-list-item-subtitle>
+      Created at: {{ formatDate(conversation.startedAt) }}
+      <span v-if="conversation.lastActivity">
+        | Last activity: {{ formatDate(conversation.lastActivity) }}
+      </span>
+    </v-list-item-subtitle>
+
+    <template #append>
       <v-menu>
         <template v-slot:activator="{ props }">
-          <v-btn icon v-bind="props">
+          <v-btn icon variant="text" v-bind="props">
             <v-icon>mdi-dots-vertical</v-icon>
           </v-btn>
         </template>
@@ -28,7 +27,7 @@
           </v-list-item>
         </v-list>
       </v-menu>
-    </v-list-item-action>
+    </template>
   </v-list-item>
   <v-dialog v-model="renameDialog" max-width="480">
     <v-card>
@@ -77,6 +76,7 @@ export default {
     formatDate(dateString) {
       if (!dateString) return '';
       const date = new Date(dateString);
+      if (Number.isNaN(date.getTime())) return '';
       return date.toLocaleDateString('en-US', {
         day: '2-digit',
         month: '2-digit',
