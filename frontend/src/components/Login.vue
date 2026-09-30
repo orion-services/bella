@@ -89,7 +89,7 @@
 </template>
 
 <script>
-import { orionUsersService, extractOrionErrorMessage } from '../services/orionUsers';
+import { orionUsersService, extractOrionErrorMessage, unvalidatedEmailMessage } from '../services/orionUsers';
 import { authService } from '../services/auth';
 import { useAuthStore } from '../stores/auth';
 import TwoFactorAuth from './TwoFactorAuth.vue';
@@ -173,6 +173,12 @@ export default {
         if (response.authentication && response.authentication.token) {
           const token = response.authentication.token;
           const user = response.authentication.user; // User is inside authentication
+
+          const emailValidationError = unvalidatedEmailMessage(user);
+          if (emailValidationError) {
+            this.error = emailValidationError;
+            return;
+          }
           
           // Create user object with id based on hash
           const userData = user ? {
@@ -213,6 +219,13 @@ export default {
     },
 
     async handle2FAAuthenticated(token, user) {
+      const emailValidationError = unvalidatedEmailMessage(user);
+      if (emailValidationError) {
+        this.requires2FA = false;
+        this.error = emailValidationError;
+        return;
+      }
+
       // Create user object with id based on hash
       const userData = user ? {
         ...user,
