@@ -10,10 +10,31 @@ import App from './App.vue';
 import { useAuthStore } from './stores/auth';
 import router from './router';
 
+function initialTheme() {
+  const saved = localStorage.getItem('twr-theme');
+  if (saved === 'light' || saved === 'dark') {
+    return saved;
+  }
+  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    return 'dark';
+  }
+  return 'light';
+}
+
+const brandColors = {
+  primary: '#F1AF62',
+  // O laranja é claro; texto branco fica ilegível. Marrom escuro mantém o contraste.
+  'on-primary': '#3B2414'
+};
+
 // Configurar Vuetify
 const vuetify = createVuetify({
   theme: {
-    defaultTheme: 'light'
+    defaultTheme: initialTheme(),
+    themes: {
+      light: { colors: brandColors },
+      dark: { colors: brandColors }
+    }
   }
 });
 
