@@ -7,7 +7,7 @@
             Login
           </v-card-title>
           <v-card-text>
-            <v-form ref="form" v-model="valid" lazy-validation>
+            <v-form ref="form" v-model="valid" lazy-validation @submit.prevent="login">
               <v-text-field
                 v-model="email"
                 :rules="emailRules"
@@ -26,7 +26,7 @@
                 :type="showPassword ? 'text' : 'password'"
                 :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
                 @click:append-inner="showPassword = !showPassword"
-                @keyup.enter="login"
+                @keydown.enter.prevent="login"
                 hint="Password must be at least 8 characters, including an uppercase letter, a number and a special character"
                 persistent-hint
               ></v-text-field>
@@ -36,12 +36,12 @@
               </v-alert>
 
               <v-btn
+                type="submit"
                 :disabled="!valid || loading"
                 :loading="loading"
                 color="primary"
                 block
                 class="mt-4"
-                @click="login"
               >
                 Sign In
               </v-btn>
@@ -152,6 +152,9 @@ export default {
   },
   methods: {
     async login() {
+      if (this.loading) {
+        return;
+      }
       if (!this.$refs.form.validate()) {
         return;
       }

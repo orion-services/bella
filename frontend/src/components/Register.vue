@@ -7,7 +7,7 @@
             Create Account
           </v-card-title>
           <v-card-text>
-            <v-form ref="form" v-model="valid" lazy-validation>
+            <v-form ref="form" v-model="valid" lazy-validation @submit.prevent="register">
               <v-text-field
                 v-model="name"
                 :rules="nameRules"
@@ -45,6 +45,7 @@
                 required
                 prepend-inner-icon="mdi-lock-check"
                 :type="showPassword ? 'text' : 'password'"
+                @keydown.enter.prevent="register"
               ></v-text-field>
 
               <v-alert v-if="error" type="error" class="mt-4">
@@ -52,12 +53,12 @@
               </v-alert>
 
               <v-btn
+                type="submit"
                 :disabled="!valid || loading"
                 :loading="loading"
                 color="primary"
                 block
                 class="mt-4"
-                @click="register"
               >
                 Register
               </v-btn>
@@ -167,6 +168,9 @@ export default {
   },
   methods: {
     async register() {
+      if (this.loading) {
+        return;
+      }
       if (!this.$refs.form.validate()) {
         return;
       }

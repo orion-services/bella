@@ -11,8 +11,8 @@
       autofocus
       :disabled="renaming"
       @click.stop
-      @keyup.enter="submitRename"
-      @keyup.esc="cancelRename"
+      @keydown.enter.prevent="submitRename"
+      @keydown.esc.prevent="cancelRename"
       @blur="submitRename"
     />
     <v-list-item-title v-else>{{ conversation.title }}</v-list-item-title>
