@@ -30,14 +30,14 @@ body {
 }
 
 .markdown-content code {
-  background-color: #f4f4f4;
+  background-color: rgba(var(--v-theme-on-surface), 0.08);
   padding: 0.2rem 0.4rem;
   border-radius: 3px;
   font-family: 'Courier New', monospace;
 }
 
 .markdown-content pre {
-  background-color: #f4f4f4;
+  background-color: rgba(var(--v-theme-on-surface), 0.08);
   padding: 1rem;
   border-radius: 6px;
   overflow-x: auto;
@@ -50,7 +50,7 @@ body {
 }
 
 .markdown-content blockquote {
-  border-left: 3px solid #1976d2;
+  border-left: 3px solid rgb(var(--v-theme-primary));
   padding-left: 1rem;
   margin: 0.5rem 0;
   font-style: italic;

@@ -24,7 +24,7 @@
         <v-progress-circular indeterminate color="primary"></v-progress-circular>
         <div class="mt-2 text-body-2">Initializing conversation...</div>
       </div>
-      <div v-else>
+      <div v-else ref="messagesContent">
         <div 
           v-for="(message, index) in messages" 
           :key="index" 
@@ -52,6 +52,7 @@
             <span></span>
           </div>
         </div>
+        <div ref="bottomAnchor" class="chat-bottom-anchor" aria-hidden="true"></div>
       </div>
     </div>
 
@@ -126,7 +127,18 @@ export default {
   async mounted() {
     await this.initializeChat();
   },
+  beforeUnmount() {
+    this.disconnectMessagesObserver();
+  },
   watch: {
+    isLoading(loading) {
+      if (loading) {
+        this.observeMessagesContent();
+      } else {
+        this.disconnectMessagesObserver();
+        this.scrollToBottom();
+      }
+    },
     '$route.params.conversationId': {
       handler(newId, oldId) {
         // Always reinitialize when conversationId changes
@@ -325,11 +337,40 @@ export default {
 
     scrollToBottom() {
       this.$nextTick(() => {
-        const container = this.$refs.chatContainer;
-        if (container) {
-          container.scrollTop = container.scrollHeight;
-        }
+        requestAnimationFrame(() => {
+          const anchor = this.$refs.bottomAnchor;
+          const container = this.$refs.chatContainer;
+          if (anchor && typeof anchor.scrollIntoView === 'function') {
+            anchor.scrollIntoView({ block: 'end' });
+          }
+          if (container) {
+            container.scrollTop = container.scrollHeight;
+          }
+        });
       });
+    },
+
+    observeMessagesContent() {
+      this.disconnectMessagesObserver();
+      this.$nextTick(() => {
+        const content = this.$refs.messagesContent;
+        if (!content || typeof ResizeObserver === 'undefined') {
+          return;
+        }
+        this.contentResizeObserver = new ResizeObserver(() => {
+          if (this.isLoading) {
+            this.scrollToBottom();
+          }
+        });
+        this.contentResizeObserver.observe(content);
+      });
+    },
+
+    disconnectMessagesObserver() {
+      if (this.contentResizeObserver) {
+        this.contentResizeObserver.disconnect();
+        this.contentResizeObserver = null;
+      }
     },
 
     async sendMessage() {
@@ -432,7 +473,12 @@ export default {
 .chat-wrapper {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  /* O router-view aplica height: 100% no elemento raiz e o v-main cresce com
+     o conteúdo. Sem uma altura fixa, a lista não rola. */
+  height: calc(100vh - var(--v-layout-top, 64px)) !important;
+  height: calc(100dvh - var(--v-layout-top, 64px)) !important;
+  max-height: calc(100dvh - var(--v-layout-top, 64px));
+  min-height: 0 !important;
   width: 100%;
   overflow: hidden;
 }
@@ -444,14 +490,19 @@ export default {
   min-height: 0;
 }
 
+.chat-bottom-anchor {
+  height: 0;
+  overflow: hidden;
+}
+
 .input-container {
   flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   padding: 1rem;
-  border-top: 1px solid rgba(0, 0, 0, 0.12);
-  background-color: white;
+  border-top: 1px solid rgba(var(--v-theme-on-surface), 0.12);
+  background-color: rgb(var(--v-theme-surface));
 }
 
 .input-field {
@@ -479,9 +530,9 @@ export default {
 }
 
 .user-message-bubble {
-  background-color: #e0e0e0 !important;
+  background-color: rgba(var(--v-theme-on-surface), 0.08) !important;
   border-radius: 18px !important;
-  color: #333 !important;
+  color: rgb(var(--v-theme-on-surface)) !important;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
@@ -500,7 +551,7 @@ export default {
 .markdown-content {
   word-wrap: break-word;
   overflow-wrap: anywhere;
-  color: rgba(0, 0, 0, 0.87);
+  color: rgba(var(--v-theme-on-surface), 0.87);
 }
 
 /* Paragraphs */
@@ -540,18 +591,18 @@ export default {
   margin-bottom: 0.75rem;
   font-weight: 600;
   line-height: 1.25;
-  color: #1a1a1a;
+  color: rgb(var(--v-theme-on-surface));
 }
 
 .markdown-content :deep(h1) {
   font-size: 1.75rem;
-  border-bottom: 1px solid #eaecef;
+  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.12);
   padding-bottom: 0.3rem;
 }
 
 .markdown-content :deep(h2) {
   font-size: 1.5rem;
-  border-bottom: 1px solid #eaecef;
+  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.12);
   padding-bottom: 0.3rem;
 }
 
@@ -569,7 +620,7 @@ export default {
 
 .markdown-content :deep(h6) {
   font-size: 0.9rem;
-  color: #666;
+  color: rgba(var(--v-theme-on-surface), 0.6);
 }
 
 .markdown-content :deep(h1:first-child),
@@ -580,7 +631,7 @@ export default {
 
 /* Inline code */
 .markdown-content :deep(code) {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: rgba(var(--v-theme-on-surface), 0.08);
   padding: 0.2em 0.4em;
   border-radius: 3px;
   font-family: 'Courier New', Courier, monospace;
@@ -637,9 +688,9 @@ export default {
 .markdown-content :deep(blockquote) {
   margin: 1rem 0;
   padding: 0.5rem 1rem;
-  border-left: 4px solid #dfe2e5;
-  background-color: rgba(0, 0, 0, 0.02);
-  color: #6a737d;
+  border-left: 4px solid rgba(var(--v-theme-on-surface), 0.2);
+  background-color: rgba(var(--v-theme-on-surface), 0.04);
+  color: rgba(var(--v-theme-on-surface), 0.7);
   font-style: italic;
 }
 
@@ -657,28 +708,28 @@ export default {
 }
 
 .markdown-content :deep(thead) {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: rgba(var(--v-theme-on-surface), 0.06);
 }
 
 .markdown-content :deep(th),
 .markdown-content :deep(td) {
-  border: 1px solid #dfe2e5;
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.2);
   padding: 0.5rem 0.75rem;
   text-align: left;
 }
 
 .markdown-content :deep(th) {
   font-weight: 600;
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: rgba(var(--v-theme-on-surface), 0.06);
 }
 
 .markdown-content :deep(tr:nth-child(even)) {
-  background-color: rgba(0, 0, 0, 0.02);
+  background-color: rgba(var(--v-theme-on-surface), 0.04);
 }
 
 /* Links */
 .markdown-content :deep(a) {
-  color: #0366d6;
+  color: rgb(var(--v-theme-primary));
   text-decoration: none;
 }
 
@@ -687,7 +738,7 @@ export default {
 }
 
 .markdown-content :deep(a:visited) {
-  color: #6f42c1;
+  color: rgb(var(--v-theme-primary));
 }
 
 /* Images */
@@ -702,7 +753,7 @@ export default {
 /* Horizontal rule */
 .markdown-content :deep(hr) {
   border: none;
-  border-top: 1px solid #eaecef;
+  border-top: 1px solid rgba(var(--v-theme-on-surface), 0.12);
   margin: 1.5rem 0;
 }
 
@@ -713,7 +764,7 @@ export default {
 .markdown-content :deep(b) {
   font-weight: 700 !important;
   font-weight: bold !important;
-  color: #1a1a1a !important;
+  color: rgb(var(--v-theme-on-surface)) !important;
   display: inline;
 }
 
@@ -739,7 +790,7 @@ export default {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  background-color: #f0f0f0;
+  background-color: rgba(var(--v-theme-on-surface), 0.08);
   border-radius: 18px;
   padding: 12px 18px;
   margin: 0 auto;
@@ -749,7 +800,7 @@ export default {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: #999;
+  background-color: rgba(var(--v-theme-on-surface), 0.45);
   animation: typingBounce 1.2s infinite ease-in-out;
 }
 
