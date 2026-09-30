@@ -9,6 +9,7 @@
       hide-details
       single-line
       autofocus
+      aria-label="Título da conversa"
       :disabled="renaming"
       @click.stop
       @keydown.enter.prevent="submitRename"
@@ -28,7 +29,7 @@
         <v-btn
           icon
           variant="text"
-          :aria-label="editing ? 'Save title' : 'Rename conversation'"
+          :aria-label="editing ? 'Salvar título' : 'Renomear conversa'"
           :loading="renaming"
           @mousedown.prevent
           @click="editing ? submitRename() : openRename()"
@@ -38,7 +39,7 @@
         <v-btn
           icon
           variant="text"
-          aria-label="Delete conversation"
+          aria-label="Excluir conversa"
           @click="confirmDelete"
         >
           <v-icon>mdi-delete</v-icon>

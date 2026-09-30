@@ -3,32 +3,32 @@
     <v-app-bar color="primary">
       <v-app-bar-title>
         <span class="app-bar-brand">
-          <img :src="appIcon" alt="Tutor TWR" class="app-bar-logo" />
+          <img :src="appIcon" alt="" class="app-bar-logo" />
           <span>Tutor TWR</span>
         </span>
       </v-app-bar-title>
       <v-spacer></v-spacer>
-      <v-btn v-if="isAuthenticated" to="/conversations" icon>
-        <v-icon>mdi-message</v-icon>
-      </v-btn>
-      <v-btn v-if="isAuthenticated" to="/settings" icon>
-        <v-icon>mdi-cog</v-icon>
-      </v-btn>
-      <v-btn v-if="isAuthenticated" @click="logout" icon>
-        <v-icon>mdi-logout</v-icon>
-      </v-btn>
-      <v-btn v-if="!isAuthenticated" to="/login" text>
-        Login
-      </v-btn>
-      <v-btn v-if="!isAuthenticated" to="/register" text>
-        Registrar
-      </v-btn>
       <v-btn
         icon
         :aria-label="isDark ? 'Usar tema claro' : 'Usar tema escuro'"
         @click="toggleTheme"
       >
-        <v-icon>{{ isDark ? 'mdi-weather-sunny' : 'mdi-weather-night' }}</v-icon>
+        <v-icon aria-hidden="true">{{ isDark ? 'mdi-weather-sunny' : 'mdi-weather-night' }}</v-icon>
+      </v-btn>
+      <v-btn v-if="!isAuthenticated" to="/register" icon aria-label="Registrar">
+        <v-icon aria-hidden="true">mdi-account-plus</v-icon>
+      </v-btn>
+      <v-btn v-if="!isAuthenticated" to="/login" icon aria-label="Entrar">
+        <v-icon aria-hidden="true">mdi-login</v-icon>
+      </v-btn>
+      <v-btn v-if="isAuthenticated" to="/conversations" icon aria-label="Conversas">
+        <v-icon aria-hidden="true">mdi-message</v-icon>
+      </v-btn>
+      <v-btn v-if="isAuthenticated" to="/settings" icon aria-label="Configurações">
+        <v-icon aria-hidden="true">mdi-cog</v-icon>
+      </v-btn>
+      <v-btn v-if="isAuthenticated" icon aria-label="Sair" @click="logout">
+        <v-icon aria-hidden="true">mdi-logout</v-icon>
       </v-btn>
     </v-app-bar>
     <v-main class="fill-height" style="height: calc(100vh - 64px); overflow: hidden;">

@@ -24,12 +24,22 @@
                 required
                 prepend-inner-icon="mdi-lock"
                 :type="showPassword ? 'text' : 'password'"
-                :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-                @click:append-inner="showPassword = !showPassword"
                 @keydown.enter.prevent="login"
                 hint="Password must be at least 8 characters, including an uppercase letter, a number and a special character"
                 persistent-hint
-              ></v-text-field>
+              >
+                <template #append-inner>
+                  <v-btn
+                    icon
+                    variant="text"
+                    size="small"
+                    :aria-label="showPassword ? 'Ocultar senha' : 'Mostrar senha'"
+                    @click="showPassword = !showPassword"
+                  >
+                    <v-icon aria-hidden="true">{{ showPassword ? 'mdi-eye' : 'mdi-eye-off' }}</v-icon>
+                  </v-btn>
+                </template>
+              </v-text-field>
 
               <v-alert v-if="error" type="error" class="mt-4">
                 {{ error }}

@@ -42,7 +42,7 @@
             </v-alert>
 
             <div v-if="loading" class="text-center mt-4">
-              <v-progress-circular indeterminate color="primary"></v-progress-circular>
+              <v-progress-circular indeterminate color="primary" aria-label="Carregando conversas" role="status"></v-progress-circular>
             </div>
           </v-card-text>
         </v-card>

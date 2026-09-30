@@ -21,7 +21,7 @@
         </v-alert>
       </div>
       <div v-if="initializing" class="text-center mt-4">
-        <v-progress-circular indeterminate color="primary"></v-progress-circular>
+        <v-progress-circular indeterminate color="primary" aria-hidden="true"></v-progress-circular>
         <div class="mt-2 text-body-2">Initializing conversation...</div>
       </div>
       <div v-else ref="messagesContent">
@@ -71,12 +71,13 @@
       <v-btn
         color="primary"
         icon
+        aria-label="Enviar mensagem"
         @click="sendMessage"
         :disabled="!prompt.trim() || isLoading || initializing || !conversationId"
         :loading="isLoading"
         class="send-button"
       >
-        <v-icon>mdi-send</v-icon>
+        <v-icon aria-hidden="true">mdi-send</v-icon>
       </v-btn>
     </div>
   </div>
