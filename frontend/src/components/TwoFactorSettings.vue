@@ -33,10 +33,20 @@
                   required
                   prepend-inner-icon="mdi-lock"
                   :type="showPassword ? 'text' : 'password'"
-                  :append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-                  @click:append-inner="showPassword = !showPassword"
                   :rules="passwordRules"
-                ></v-text-field>
+                >
+                  <template #append-inner>
+                    <v-btn
+                      icon
+                      variant="text"
+                      size="small"
+                      :aria-label="showPassword ? 'Ocultar senha' : 'Mostrar senha'"
+                      @click="showPassword = !showPassword"
+                    >
+                      <v-icon aria-hidden="true">{{ showPassword ? 'mdi-eye' : 'mdi-eye-off' }}</v-icon>
+                    </v-btn>
+                  </template>
+                </v-text-field>
 
                 <v-btn
                   :disabled="!qrFormValid || loadingQR"
