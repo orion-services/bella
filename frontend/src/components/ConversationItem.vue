@@ -1,6 +1,21 @@
 <template>
-  <v-list-item>
-    <v-list-item-title>{{ conversation.title }}</v-list-item-title>
+  <v-list-item @click="$emit('select', conversation.id)">
+    <v-text-field
+      v-if="editing"
+      ref="titleField"
+      v-model="newTitle"
+      density="compact"
+      variant="underlined"
+      hide-details
+      single-line
+      autofocus
+      :disabled="renaming"
+      @click.stop
+      @keyup.enter="submitRename"
+      @keyup.esc="cancelRename"
+      @blur="submitRename"
+    />
+    <v-list-item-title v-else>{{ conversation.title }}</v-list-item-title>
     <v-list-item-subtitle>
       Created at: {{ formatDate(conversation.startedAt) }}
       <span v-if="conversation.lastActivity">
@@ -9,47 +24,28 @@
     </v-list-item-subtitle>
 
     <template #append>
-      <v-menu>
-        <template v-slot:activator="{ props }">
-          <v-btn icon variant="text" v-bind="props">
-            <v-icon>mdi-dots-vertical</v-icon>
-          </v-btn>
-        </template>
-        <v-list>
-          <v-list-item @click="$emit('select', conversation.id)">
-            <v-list-item-title>Open</v-list-item-title>
-          </v-list-item>
-          <v-list-item @click="openRename">
-            <v-list-item-title>Rename</v-list-item-title>
-          </v-list-item>
-          <v-list-item @click="confirmDelete">
-            <v-list-item-title>Delete</v-list-item-title>
-          </v-list-item>
-        </v-list>
-      </v-menu>
+      <div @click.stop>
+        <v-btn
+          icon
+          variant="text"
+          :aria-label="editing ? 'Save title' : 'Rename conversation'"
+          :loading="renaming"
+          @mousedown.prevent
+          @click="editing ? submitRename() : openRename()"
+        >
+          <v-icon>{{ editing ? 'mdi-check' : 'mdi-pencil' }}</v-icon>
+        </v-btn>
+        <v-btn
+          icon
+          variant="text"
+          aria-label="Delete conversation"
+          @click="confirmDelete"
+        >
+          <v-icon>mdi-delete</v-icon>
+        </v-btn>
+      </div>
     </template>
   </v-list-item>
-  <v-dialog v-model="renameDialog" max-width="480">
-    <v-card>
-      <v-card-title>Rename conversation</v-card-title>
-      <v-card-text>
-        <v-text-field
-          v-model="newTitle"
-          label="Title"
-          variant="outlined"
-          density="comfortable"
-          hide-details="auto"
-          :disabled="renaming"
-          @keyup.enter="submitRename"
-        />
-      </v-card-text>
-      <v-card-actions>
-        <v-spacer />
-        <v-btn variant="text" @click="renameDialog = false" :disabled="renaming">Cancel</v-btn>
-        <v-btn color="primary" :loading="renaming" @click="submitRename">Save</v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
   <v-divider></v-divider>
 </template>
 
@@ -67,7 +63,7 @@ export default {
   emits: ['select', 'delete', 'renamed'],
   data() {
     return {
-      renameDialog: false,
+      editing: false,
       newTitle: '',
       renaming: false
     };
@@ -88,18 +84,30 @@ export default {
 
     openRename() {
       this.newTitle = this.conversation.title || '';
-      this.renameDialog = true;
+      this.editing = true;
+      this.$nextTick(() => {
+        this.$refs.titleField?.focus?.();
+      });
+    },
+
+    cancelRename() {
+      this.editing = false;
+      this.newTitle = this.conversation.title || '';
     },
 
     async submitRename() {
+      if (!this.editing || this.renaming) {
+        return;
+      }
       const title = (this.newTitle || '').trim();
-      if (!title) {
+      if (!title || title === (this.conversation.title || '').trim()) {
+        this.cancelRename();
         return;
       }
       this.renaming = true;
       try {
         await apiService.updateConversationTitle(this.conversation.id, title);
-        this.renameDialog = false;
+        this.editing = false;
         this.$emit('renamed');
       } catch (e) {
         console.error('Error renaming conversation:', e);

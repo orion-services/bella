@@ -251,8 +251,8 @@ export default {
       // Aguardar um pouco para garantir que o store foi atualizado
       await this.$nextTick();
       
-      // Redirect to chat
-      this.$router.push('/chat');
+      // Stay on the conversation list. /chat without an id creates a new conversation.
+      this.$router.push('/conversations');
     },
 
     waitForGoogleScript() {
