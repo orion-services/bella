@@ -9,7 +9,7 @@
  */
 package dev.rpmhub.adapter.out.rag;
 
-import dev.rpmhub.domain.model.DocumentData;
+import dev.rpmhub.domain.model.Document;
 import dev.rpmhub.domain.port.out.WebScraperPort;
 import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -80,7 +80,7 @@ public class WebScraper implements WebScraperPort {
      * @return Optional containing the Document, or empty if fetch/conversion failed
      */
     @Override
-    public Optional<DocumentData> scrapeToDocument(String url) {
+    public Optional<Document> scrapeToDocument(String url) {
         if (url == null || url.isBlank()) {
             return Optional.empty();
         }
@@ -111,7 +111,7 @@ public class WebScraper implements WebScraperPort {
 
             persistMarkdownIfEnabled(url, markdown);
 
-            return Optional.of(new DocumentData(markdown, url));
+            return Optional.of(new Document(markdown, url));
         } catch (Exception e) {
             Log.warn("❌ Error scraping " + url, e);
             return Optional.empty();

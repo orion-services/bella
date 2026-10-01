@@ -14,11 +14,15 @@ import java.util.concurrent.ConcurrentMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import dev.rpmhub.adapter.out.ai.BellaAgent;
+import dev.rpmhub.adapter.out.ai.AdministrativeAgent;
+import dev.rpmhub.adapter.out.ai.TeacherAgent;
 import dev.rpmhub.domain.model.Chat;
+import dev.rpmhub.domain.model.Intention;
+import dev.rpmhub.domain.model.RagCorpus;
 import dev.rpmhub.domain.model.RagQuery;
 import dev.rpmhub.domain.model.RagResponse;
 import dev.rpmhub.domain.port.out.EmbeddingRepository;
+import dev.rpmhub.domain.port.out.QuestionRouter;
 import dev.rpmhub.domain.port.out.Repository;
 import io.smallrye.mutiny.Multi;
 
@@ -47,7 +51,17 @@ class ChatServiceTest {
     /**
      * Assistant test double that records invoked prompts.
      */
-    private FakeBellaAgent bellaAgent;
+    private FakeTeacherAgent teacherAgent;
+
+    /**
+     * Administrative assistant test double.
+     */
+    private FakeAdministrativeAgent administrativeAgent;
+
+    /**
+     * Router test double that sends every message to the teacher agent unless a test overrides it.
+     */
+    private FakeQuestionRouter questionRouter;
 
     /**
      * Service under test.
@@ -61,8 +75,12 @@ class ChatServiceTest {
     void setUp() {
         chatRepository = new FakeChatRepository();
         embeddingRepository = new FakeEmbeddingRepository();
-        bellaAgent = new FakeBellaAgent();
-        chatService = new ChatService(chatRepository, embeddingRepository, bellaAgent, 3, 0.6, 30 * MINUTE_MS);
+        teacherAgent = new FakeTeacherAgent();
+        administrativeAgent = new FakeAdministrativeAgent();
+        questionRouter = new FakeQuestionRouter();
+        AssistantRouter assistantRouter = new AssistantRouter(embeddingRepository, teacherAgent,
+                administrativeAgent, questionRouter, 3, 0.6);
+        chatService = new ChatService(chatRepository, assistantRouter, 30 * MINUTE_MS);
     }
 
     /**
@@ -73,7 +91,7 @@ class ChatServiceTest {
         List<String> chunks = chatService.chat("5511999999999", "oi").collect().asList().await().indefinitely();
 
         assertEquals(List.of("resposta"), chunks);
-        assertEquals(List.of("oi"), bellaAgent.prompts);
+        assertEquals(List.of("oi"), teacherAgent.prompts);
         assertTrue(chatRepository.findLastByPhone("5511999999999").isPresent());
         Chat chat = chatRepository.findLastByPhone("5511999999999").orElseThrow();
         assertEquals(1, chat.getUserMessages().size());
@@ -93,8 +111,8 @@ class ChatServiceTest {
 
         assertSame(first, second);
         assertEquals(2, second.getUserMessages().size());
-        assertEquals(List.of("oi", "tudo bem?"), bellaAgent.prompts);
-        assertEquals(List.of(first.getId(), first.getId()), bellaAgent.memoryIds);
+        assertEquals(List.of("oi", "tudo bem?"), teacherAgent.prompts);
+        assertEquals(List.of(first.getId(), first.getId()), teacherAgent.memoryIds);
     }
 
     /**
@@ -113,7 +131,7 @@ class ChatServiceTest {
         assertNotEquals(first.getId(), next.getId());
         assertEquals(1, next.getUserMessages().size());
         assertEquals("voltei", next.getUserMessages().get(0).getMessage());
-        assertEquals(List.of(first.getId(), next.getId()), bellaAgent.memoryIds);
+        assertEquals(List.of(first.getId(), next.getId()), teacherAgent.memoryIds);
     }
 
     /**
@@ -122,7 +140,7 @@ class ChatServiceTest {
      */
     @Test
     void chat_persistsAgentReply_whenStreamCompletes() {
-        bellaAgent.chunks = List.of("res", "pos", "ta");
+        teacherAgent.chunks = List.of("res", "pos", "ta");
 
         List<String> chunks = chatService.chat("5511999999999", "oi").collect().asList().await().indefinitely();
 
@@ -159,7 +177,27 @@ class ChatServiceTest {
 
         chatService.chat("5511999999999", "oi").collect().asList().await().indefinitely();
 
-        assertEquals(List.of("trecho relevante"), bellaAgent.contexts);
+        assertEquals(List.of("trecho relevante"), teacherAgent.contexts);
+        assertEquals(RagCorpus.DISCIPLINE, embeddingRepository.lastQuery.getCorpus());
+    }
+
+    /**
+     * Ensures an administrative question is answered by the administrative agent
+     * with context from the course corpus.
+     */
+    @Test
+    void chat_usesAdministrativeAgent_whenIntentIsCourse() {
+        questionRouter.intent = Intention.COURSE;
+        embeddingRepository.contexts = List.of("perfil do egresso");
+        administrativeAgent.chunks = List.of("o egresso desenvolve sistemas web");
+
+        List<String> chunks = chatService.chat("5511999999999", "qual o perfil do egresso?")
+                .collect().asList().await().indefinitely();
+
+        assertEquals(List.of("o egresso desenvolve sistemas web"), chunks);
+        assertTrue(teacherAgent.prompts.isEmpty());
+        assertEquals(List.of("perfil do egresso"), administrativeAgent.contexts);
+        assertEquals(RagCorpus.COURSE, embeddingRepository.lastQuery.getCorpus());
     }
 
     /**
@@ -218,16 +256,66 @@ class ChatServiceTest {
          */
         private List<String> contexts = List.of();
 
+        /**
+         * Last query received by {@link #searchChunks(RagQuery)}.
+         */
+        private RagQuery lastQuery;
+
         @Override
         public RagResponse searchChunks(RagQuery query) {
+            lastQuery = query;
             return new RagResponse(query.getQuery(), contexts, contexts.isEmpty() ? 0.0 : 1.0);
+        }
+    }
+
+    /**
+     * Fake router that returns a configurable intent.
+     */
+    private static final class FakeQuestionRouter implements QuestionRouter {
+
+        /**
+         * Intent returned by {@link #classify(String)}.
+         */
+        private Intention intent = Intention.DISCIPLINE;
+
+        @Override
+        public Intention classify(String question) {
+            return intent;
+        }
+    }
+
+    /**
+     * Fake administrative agent that records prompts and returns a fixed chunk.
+     */
+    private static final class FakeAdministrativeAgent implements AdministrativeAgent {
+
+        /**
+         * Prompts received by the agent.
+         */
+        private final List<String> prompts = new ArrayList<>();
+
+        /**
+         * Contexts received by the agent.
+         */
+        private final List<String> contexts = new ArrayList<>();
+
+        /**
+         * Chunks emitted for the next call to {@link #answer(String, String, String)}.
+         */
+        private List<String> chunks = List.of("resposta administrativa");
+
+        @Override
+        public Multi<String> answer(String memoryId, String context, String prompt) {
+            contexts.add(context);
+            prompts.add(prompt);
+            return Multi.createFrom().iterable(chunks);
         }
     }
 
     /**
      * Fake AI service that records prompts/contexts and returns a fixed chunk.
      */
-    private static final class FakeBellaAgent implements BellaAgent {
+    private static final class FakeTeacherAgent implements TeacherAgent {
 
         /**
          * Prompts received by the AI service.

@@ -2,6 +2,7 @@ package dev.rpmhub.adapter.config;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -13,12 +14,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import dev.rpmhub.adapter.out.ai.BellaAgent;
+import dev.rpmhub.adapter.out.ai.AdministrativeAgent;
+import dev.rpmhub.adapter.out.ai.TeacherAgent;
 import dev.rpmhub.application.ChatService;
+import dev.rpmhub.domain.model.Intention;
 import dev.rpmhub.domain.model.RagQuery;
 import dev.rpmhub.domain.model.RagResponse;
 import dev.rpmhub.domain.port.in.ChatUseCase;
 import dev.rpmhub.domain.port.out.EmbeddingRepository;
+import dev.rpmhub.domain.port.out.QuestionRouter;
 import dev.rpmhub.domain.port.out.Repository;
 import io.smallrye.mutiny.Multi;
 
@@ -49,7 +53,19 @@ class ApplicationBeansTest {
      * Driven port mocked to isolate the wiring under test.
      */
     @Mock
-    private BellaAgent bellaAgent;
+    private TeacherAgent teacherAgent;
+
+    /**
+     * Administrative agent mocked so wiring can build the assistant router.
+     */
+    @Mock
+    private AdministrativeAgent administrativeAgent;
+
+    /**
+     * Router mocked so the chat use case can classify the test message.
+     */
+    @Mock
+    private QuestionRouter questionRouter;
 
     /**
      * Wiring class under test.
@@ -64,7 +80,9 @@ class ApplicationBeansTest {
         applicationBeans = new ApplicationBeans();
         applicationBeans.chatRepository = chatRepository;
         applicationBeans.embeddingRepository = embeddingRepository;
-        applicationBeans.bellaAgent = bellaAgent;
+        applicationBeans.teacherAgent = teacherAgent;
+        applicationBeans.administrativeAgent = administrativeAgent;
+        applicationBeans.questionRouter = questionRouter;
     }
 
     /**
@@ -73,10 +91,12 @@ class ApplicationBeansTest {
      */
     @Test
     void chatUseCase_producesChatServiceWiredWithInjectedPorts() {
+        when(questionRouter.classify("oi")).thenReturn(Intention.DISCIPLINE);
         when(chatRepository.findLastByPhone("5511999999999")).thenReturn(Optional.empty());
         when(embeddingRepository.searchChunks(org.mockito.ArgumentMatchers.any(RagQuery.class)))
                 .thenReturn(new RagResponse("oi", List.of(), 0.0));
-        when(bellaAgent.answer("5511999999999", "", "oi")).thenReturn(Multi.createFrom().items("resposta"));
+        when(teacherAgent.answer(anyString(), anyString(), anyString()))
+                .thenReturn(Multi.createFrom().items("resposta"));
 
         ChatUseCase chatUseCase = applicationBeans.chatUseCase();
 

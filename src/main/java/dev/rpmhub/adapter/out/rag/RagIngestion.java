@@ -18,7 +18,7 @@ import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.embedding.onnx.HuggingFaceTokenCountEstimator;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.EmbeddingStoreIngestor;
-import dev.rpmhub.domain.model.DocumentData;
+import dev.rpmhub.domain.model.RagCorpus;
 import dev.rpmhub.domain.port.out.IngestPort;
 import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -29,12 +29,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import static dev.langchain4j.data.document.splitter.DocumentSplitters.recursive;
 
 /**
  * Implementation of the {@link IngestPort} port using LangChain4j, backed by the
- * pgvector-based {@link EmbeddingStore} and a local embedding model.
+ * pgvector-based {@link EmbeddingStore} and the configured embedding model.
  *
  * @author Rodrigo Prestes Machado
  */
@@ -76,19 +77,22 @@ public class RagIngestion implements IngestPort {
 
             try (var files = Files.walk(dirPath)) {
                 files.filter(Files::isRegularFile)
+                        .filter(file -> !file.getFileName().toString().startsWith("."))
                         .forEach(file -> {
+                            String corpus = corpusFor(file);
                             if (pdfService.isPdfFile(file)) {
                                 String extractedText = pdfService.extractText(file);
                                 if (!extractedText.isEmpty()) {
-                                    Document pdfDocument = Document.from(extractedText);
-                                    documents.add(pdfDocument);
-                                    Log.info("PDF processed: " + file.getFileName());
+                                    documents.add(Document.from(extractedText, corpusMetadata(file, corpus)));
+                                    Log.info("PDF processed: " + file.getFileName() + " (" + corpus + ")");
                                 }
                             } else {
                                 try {
                                     Document fileDoc = FileSystemDocumentLoader.loadDocument(file);
+                                    fileDoc.metadata().put("corpus", corpus);
+                                    fileDoc.metadata().put("source", file.getFileName().toString());
                                     documents.add(fileDoc);
-                                    Log.info("File processed: " + file.getFileName());
+                                    Log.info("File processed: " + file.getFileName() + " (" + corpus + ")");
                                 } catch (BlankDocumentException e) {
                                     Log.warn("Skipping blank file: " + file.getFileName());
                                 }
@@ -122,13 +126,14 @@ public class RagIngestion implements IngestPort {
      * {@inheritDoc}
      */
     @Override
-    public void ingestDocuments(List<DocumentData> documents) {
+    public void ingestDocuments(List<dev.rpmhub.domain.model.Document> documents) {
         if (documents == null || documents.isEmpty()) {
             Log.info("📭 No documents to ingest.");
             return;
         }
         List<Document> langChainDocs = documents.stream()
-                .map(dd -> Document.from(dd.getText(), Metadata.from("source", dd.getSource())))
+                .map(document -> Document.from(document.getText(),
+                        Metadata.from("source", document.getSource()).put("corpus", document.getCorpus())))
                 .toList();
         EmbeddingStoreIngestor ingestor = EmbeddingStoreIngestor.builder()
                 .embeddingStore(embeddingStore)
@@ -137,5 +142,30 @@ public class RagIngestion implements IngestPort {
                 .build();
         ingestor.ingest(langChainDocs);
         Log.info("✅ Ingestion of " + documents.size() + " document(s) completed successfully!");
+    }
+
+    /**
+     * Assigns a file to the course corpus when its name or parent folder marks it
+     * as an institutional document. Everything else stays with the discipline.
+     *
+     * @param file the document being ingested
+     * @return {@link RagCorpus#COURSE} or {@link RagCorpus#DISCIPLINE}
+     */
+    static String corpusFor(Path file) {
+        String name = file.getFileName().toString().toLowerCase(Locale.ROOT);
+        String parent = file.getParent() != null && file.getParent().getFileName() != null
+                ? file.getParent().getFileName().toString().toLowerCase(Locale.ROOT)
+                : "";
+        if (parent.equals("course") || parent.equals("curso") || parent.equals("administrativo")
+                || name.startsWith("ppc")
+                || name.contains("calendario")
+                || name.contains("calendário")) {
+            return RagCorpus.COURSE;
+        }
+        return RagCorpus.DISCIPLINE;
+    }
+
+    private static Metadata corpusMetadata(Path file, String corpus) {
+        return Metadata.from("source", file.getFileName().toString()).put("corpus", corpus);
     }
 }

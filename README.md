@@ -16,27 +16,35 @@ You can run your application in dev mode that enables live coding using:
 ./mvnw quarkus:dev
 ```
 
+Dev mode uses the same OpenAI models as production (`gpt-4o-mini` for chat and
+`text-embedding-3-small` for embeddings). Set `OPENAI_API_KEY` in the environment
+or in a `.env` file at the project root before starting. If a local Postgres
+already has an `embeddings` table created with the previous 384-dimension model,
+drop that table once so startup can recreate it at 1536 dimensions.
+
 > **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at <http://localhost:8080/q/dev/>.
 
 ### Frontend (Vue) + Orion Users (auth) in dev
 
 The web UI (`frontend/`) authenticates against Orion Users (login/registration/2FA),
-an external service that is **not** part of this repo and must be running for
-login/signup to work — see `docker-compose.yml` (service `orion-users`, built from
-[orion-services/users](https://github.com/orion-services/users)).
+an external service that is **not** part of this repo.
+`./mvnw quarkus:dev` starts it through Compose Dev Services
+(`compose-devservices.yml`): Docker clones
+[orion-services/users](https://github.com/orion-services/users) `main` and
+publishes it at <http://localhost:8082>. Bella's own Postgres and Redis still
+come from Quarkus Dev Services. The test profile does not start Orion Users
+and keeps Ollama as the chat model.
 
 ```shell script
-# 1. Start Orion Users (+ its own Postgres/Redis, independent from Quarkus Dev
-#    Services used by `quarkus:dev`). Requires a .env — see .env.example.
-cp .env.example .env    # fill in POSTGRES_PASSWORD and Gmail SMTP credentials;
-                        # use the local ORION_USERS_EMAIL_VALIDATION_URL shown there
-docker compose up -d postgres redis orion-users
-# Orion Users is now reachable at http://localhost:8082 (ORION_USERS_HOST_PORT)
+# 1. Requires a .env — see .env.example. Fill in POSTGRES_PASSWORD and Gmail
+#    SMTP credentials; use the local ORION_USERS_EMAIL_VALIDATION_URL shown there.
+cp .env.example .env
 
 # 2. Create frontend/.env once (see the warning below for why this matters)
 cd frontend && cp .env.example .env && cd ..   # VITE_ORION_USERS_URL already defaults to http://localhost:8082
 
-# 3. Run the Quarkus backend as usual — no separate frontend server needed.
+# 3. Run the Quarkus backend. The first start builds Orion Users and can take
+#    several minutes. Later starts reuse the image when main has not changed.
 ./mvnw quarkus:dev
 ```
 

@@ -9,7 +9,7 @@
  */
 package dev.rpmhub.domain.port.out;
 
-import dev.rpmhub.domain.model.DocumentData;
+import dev.rpmhub.domain.model.Document;
 
 import java.util.Optional;
 
@@ -26,7 +26,7 @@ public interface WebScraperPort {
      * @param url the URL to scrape
      * @return Optional containing the document data, or empty if scraping failed
      */
-    Optional<DocumentData> scrapeToDocument(String url);
+    Optional<Document> scrapeToDocument(String url);
 
     /**
      * Clears the markdown output directory if saving is enabled.

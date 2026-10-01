@@ -13,13 +13,10 @@ import java.util.Date;
 
 import dev.rpmhub.domain.model.AgentMessage;
 import dev.rpmhub.domain.model.Chat;
-import dev.rpmhub.domain.model.RagQuery;
-import dev.rpmhub.domain.model.RagResponse;
 import dev.rpmhub.domain.model.User;
-import dev.rpmhub.adapter.out.ai.BellaAgent;
 import dev.rpmhub.domain.model.UserMessage;
 import dev.rpmhub.domain.port.in.ChatUseCase;
-import dev.rpmhub.domain.port.out.EmbeddingRepository;
+import dev.rpmhub.domain.port.in.RouterUseCase;
 import dev.rpmhub.domain.port.out.Repository;
 import io.smallrye.mutiny.Multi;
 
@@ -35,25 +32,13 @@ import io.smallrye.mutiny.Multi;
  */
 public class ChatService implements ChatUseCase {
 
-    /** Fallback context string used when no relevant chunk is found. */
-    private static final String DEFAULT_CONTEXT = "";
-
     /**
      * Repository used to load and store the last chat per user.
      */
     private final Repository chatRepository;
 
-    /** Repository used to search embedding chunks relevant to the message. */
-    private final EmbeddingRepository embeddingRepository;
-
-    /** AI service used to generate a streaming reply grounded in retrieved context. */
-    private final BellaAgent bellaAgent;
-
-    /** Number of context chunks retrieved per message ({@code rag.max-results}). */
-    private final int maxResults;
-
-    /** Minimum similarity score required for a retrieved chunk to be used as context ({@code rag.min-score}). */
-    private final double minScore;
+    /** Chooses the teacher or the administrative agent and retrieves the matching corpus. */
+    private final RouterUseCase routerUseCase;
 
     /** Maximum idle time, in milliseconds, before a new chat session starts ({@code chat.inactivity-threshold-minutes}). */
     private final long inactivityThresholdMs;
@@ -62,19 +47,12 @@ public class ChatService implements ChatUseCase {
      * Creates the chat service with its driven ports.
      *
      * @param chatRepository        port used to persist chats
-     * @param embeddingRepository   port for vector-similarity search
-     * @param bellaAgent             AI service used to generate contextual replies
-     * @param maxResults            number of context chunks retrieved per message
-     * @param minScore              minimum similarity score required for a retrieved chunk to be used as context
+     * @param routerUseCase      routes the message and retrieves the matching corpus
      * @param inactivityThresholdMs maximum idle time, in milliseconds, before a new chat session starts
      */
-    public ChatService(Repository chatRepository, EmbeddingRepository embeddingRepository,
-            BellaAgent bellaAgent, int maxResults, double minScore, long inactivityThresholdMs) {
+    public ChatService(Repository chatRepository, RouterUseCase routerUseCase, long inactivityThresholdMs) {
         this.chatRepository = chatRepository;
-        this.embeddingRepository = embeddingRepository;
-        this.bellaAgent = bellaAgent;
-        this.maxResults = maxResults;
-        this.minScore = minScore;
+        this.routerUseCase = routerUseCase;
         this.inactivityThresholdMs = inactivityThresholdMs;
     }
 
@@ -95,14 +73,9 @@ public class ChatService implements ChatUseCase {
         Chat chat = Chat.accept(lastChat, userMessage, inactivityThresholdMs);
         chatRepository.save(chat);
 
-        RagQuery query = new RagQuery(message, maxResults, minScore);
-        RagResponse ragResponse = embeddingRepository.searchChunks(query);
-        String context = ragResponse.getContexts().isEmpty()
-                ? DEFAULT_CONTEXT : String.join("\n\n", ragResponse.getContexts());
-
         StringBuilder buffer = new StringBuilder();
 
-        return bellaAgent.answer(chat.getId(), context, message)
+        return routerUseCase.answer(chat.getId(), message)
                 .invoke(buffer::append)
                 .onCompletion().invoke(() -> {
                     AgentMessage agentMessage = new AgentMessage();

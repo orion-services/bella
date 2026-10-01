@@ -17,27 +17,25 @@ import io.smallrye.mutiny.Multi;
 import jakarta.enterprise.context.ApplicationScoped;
 
 /**
- * LangChain4j AI service for the teacher agent: Bella's programming tutor for the
- * Construção de Páginas Web II course.
+ * LangChain4j AI service that answers administrative questions about the course
+ * (PPC, academic calendar, rules) and shares conversational memory with the teacher agent.
  *
  * @author Rodrigo Prestes Machado
  */
 @RegisterAiService
 @ApplicationScoped
-public interface TeacherAgent {
+public interface AdministrativeAgent {
 
     /**
-     * Streams a teacher reply grounded in the conversation and optional RAG context.
+     * Streams a reply grounded in institutional documents.
      *
-     * @param memoryId stable identifier of the conversation, used to isolate conversational memory.
-     *                 On WhatsApp this is the chat id (a new id after 30 minutes of inactivity);
-     *                 on the web it is the conversation id chosen by the user
-     * @param context  relevant passages retrieved from the vector store (may be empty)
+     * @param memoryId same conversation id used by {@link TeacherAgent}, so follow-up
+     *                 turns stay in one memory
+     * @param context  passages retrieved from the course corpus (may be empty)
      * @param prompt   the student message
      * @return a multi that emits the response chunks
      */
-    @SystemMessage(fromResource = "/prompts/teacher.md")
+    @SystemMessage(fromResource = "/prompts/administrative.md")
     @UserMessage("Contexto: {context}\n\nPergunta: {prompt}")
     Multi<String> answer(@MemoryId String memoryId, String context, String prompt);
-
 }

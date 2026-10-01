@@ -4,9 +4,9 @@
 # Services:
 #   caddy        - reverse proxy, automatic HTTPS (Let's Encrypt) for DOMAIN
 #   bella          - the Quarkus app itself (this repo), built from src/main/docker/Dockerfile.jvm.
-#                  Runs the "prod" Quarkus profile, which uses OpenAI (gpt-4o-mini) as the chat
-#                  model instead of Ollama (see application.properties) — no local LLM runtime
-#                  needed on the instance.
+#                  Runs the "prod" Quarkus profile, which uses OpenAI (gpt-4o-mini and
+#                  text-embedding-3-small) via OPENAI_API_KEY — no local LLM runtime
+#                  needed on the instance. Dev mode uses the same models.
 #   postgres     - pgvector-enabled Postgres, chat persistence + embeddings storage
 #   redis        - conversation memory store
 #   orion-users  - external auth service (login/registration/2FA) that issues the JWTs the
@@ -69,8 +69,8 @@ services:
       WHATSAPP_ACCESS_TOKEN: ${WHATSAPP_ACCESS_TOKEN:-}
       WHATSAPP_VERIFY_TOKEN: ${WHATSAPP_VERIFY_TOKEN:-bella-webhook-verify}
       WHATSAPP_APP_SECRET: ${WHATSAPP_APP_SECRET:-}
-      # Required in prod: used as the chat model (gpt-4o-mini) and for WhatsApp audio
-      # transcription (Whisper).
+      # Required in prod: chat model (gpt-4o-mini), embeddings (text-embedding-3-small)
+      # and WhatsApp audio transcription (Whisper).
       OPENAI_API_KEY: ${OPENAI_API_KEY:?set OPENAI_API_KEY in .env}
     depends_on:
       postgres:

@@ -1,0 +1,45 @@
+# Started automatically by `./mvnw quarkus:dev` (Compose Dev Services).
+# Not used in test or prod. Docker Compose clones orion-services/users at build time.
+# Bella keeps its own Postgres and Redis Dev Services; this Postgres is only for users.
+name: bella-devservices
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    labels:
+      # Do not replace Bella's datasource Dev Service with this database.
+      io.quarkus.devservices.compose.ignore: "true"
+    environment:
+      POSTGRES_DB: bella
+      POSTGRES_USER: ${POSTGRES_USER:-bella}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - orion_users_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bella} -d bella"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  orion-users:
+    image: bella-orion-users:dev
+    build:
+      context: https://github.com/orion-services/users.git#main
+    ports:
+      - "${ORION_USERS_HOST_PORT:-8082}:8080"
+    environment:
+      QUARKUS_DEVSERVICES_ENABLED: "false"
+      QUARKUS_DATASOURCE_REACTIVE_URL: postgresql://postgres:5432/bella
+      QUARKUS_DATASOURCE_USERNAME: ${POSTGRES_USER:-bella}
+      QUARKUS_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      QUARKUS_MAILER_MOCK: "${QUARKUS_MAILER_MOCK:-false}"
+      QUARKUS_MAILER_FROM: ${QUARKUS_MAILER_FROM:-devoriontest@gmail.com}
+      QUARKUS_MAILER_USERNAME: ${QUARKUS_MAILER_USERNAME:-devoriontest@gmail.com}
+      QUARKUS_MAILER_PASSWORD: ${QUARKUS_MAILER_PASSWORD:-}
+      USERS_EMAIL_VALIDATION_URL: ${ORION_USERS_EMAIL_VALIDATION_URL:-http://localhost:8082/users/validateEmail}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  orion_users_postgres_data:

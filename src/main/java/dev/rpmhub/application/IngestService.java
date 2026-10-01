@@ -12,7 +12,7 @@ package dev.rpmhub.application;
 import java.util.ArrayList;
 import java.util.List;
 
-import dev.rpmhub.domain.model.DocumentData;
+import dev.rpmhub.domain.model.Document;
 import dev.rpmhub.domain.port.in.IngestDocumentsPort;
 import dev.rpmhub.domain.port.out.IngestPort;
 import dev.rpmhub.domain.port.out.WebScraperPort;
@@ -69,7 +69,7 @@ public class IngestService implements IngestDocumentsPort {
         }
         webScraperPort.clearMarkdownOutputDirIfEnabled();
 
-        List<DocumentData> documents = new ArrayList<>();
+        List<Document> documents = new ArrayList<>();
         for (String url : urls) {
             webScraperPort.scrapeToDocument(url).ifPresent(documents::add);
         }
