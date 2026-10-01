@@ -25,7 +25,7 @@ import jakarta.ws.rs.core.Response;
  * {@code /login} or {@code /conversations} work instead of returning a raw 404.
  *
  * <p>Registered as a plain {@code {path:.*}} catch-all: JAX-RS resolves the more
- * specific, literal API routes ({@code /twr/*}, {@code /webhook/*}, {@code /q/*}) and the
+ * specific, literal API routes ({@code /bella/*}, {@code /webhook/*}, {@code /q/*}) and the
  * static {@code /assets/*} handler ahead of this generic template regardless, so this
  * fallback only ever kicks in for genuinely unmatched paths (i.e. Vue Router routes like
  * {@code /login} or {@code /conversations}).

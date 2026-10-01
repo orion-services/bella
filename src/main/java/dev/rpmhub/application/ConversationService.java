@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
-import dev.rpmhub.adapter.out.ai.TwrAgent;
+import dev.rpmhub.adapter.out.ai.BellaAgent;
 import dev.rpmhub.domain.model.AgentMessage;
 import dev.rpmhub.domain.model.Chat;
 import dev.rpmhub.domain.model.RagQuery;
@@ -49,7 +49,7 @@ public class ConversationService implements ConversationUseCase {
     private final EmbeddingRepository embeddingRepository;
 
     /** AI service used to generate a streaming reply grounded in retrieved context. */
-    private final TwrAgent twrAgent;
+    private final BellaAgent bellaAgent;
 
     /** Number of context chunks retrieved per message ({@code rag.max-results}). */
     private final int maxResults;
@@ -65,15 +65,15 @@ public class ConversationService implements ConversationUseCase {
      *
      * @param repository           port used to persist conversations
      * @param embeddingRepository  port for vector-similarity search
-     * @param twrAgent             AI service used to generate contextual replies
+     * @param bellaAgent             AI service used to generate contextual replies
      * @param maxResults           number of context chunks retrieved per message
      * @param minScore             minimum similarity score required for a retrieved chunk
      */
     public ConversationService(Repository repository, EmbeddingRepository embeddingRepository,
-            TwrAgent twrAgent, int maxResults, double minScore) {
+            BellaAgent bellaAgent, int maxResults, double minScore) {
         this.repository = repository;
         this.embeddingRepository = embeddingRepository;
-        this.twrAgent = twrAgent;
+        this.bellaAgent = bellaAgent;
         this.maxResults = maxResults;
         this.minScore = minScore;
     }
@@ -94,6 +94,11 @@ public class ConversationService implements ConversationUseCase {
     @Override
     public Optional<Chat> getConversation(String conversationId) {
         return repository.findConversationById(conversationId);
+    }
+
+    @Override
+    public Chat getOwnedConversation(String conversationId, String orionUserHash) {
+        return ownedConversation(conversationId, orionUserHash);
     }
 
     @Override
@@ -128,7 +133,7 @@ public class ConversationService implements ConversationUseCase {
 
         StringBuilder buffer = new StringBuilder();
 
-        return twrAgent.answer(conversationId, context, prompt)
+        return bellaAgent.answer(conversationId, context, prompt)
                 .invoke(buffer::append)
                 .onCompletion().invoke(() -> {
                     AgentMessage agentMessage = new AgentMessage();

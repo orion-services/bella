@@ -13,7 +13,7 @@ import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 
 /**
- * Driving port for chatting with TWR.
+ * Driving port for chatting with Bella.
  *
  * @author Rodrigo Prestes Machado
  */

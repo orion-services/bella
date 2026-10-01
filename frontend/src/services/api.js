@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// Backend API Service (TWR)
+// Backend API Service (Bella)
 // VITE_API_BASE_URL vazio (string '') significa "mesma origem" (produção: frontend
 // servido pelo próprio Quarkus). Só cai no default localhost quando a variável não
 // foi definida em nenhum momento do build (undefined), útil em dev sem .env.
@@ -60,7 +60,7 @@ export const apiService = {
   // Conversas
   async createConversation(userId, title) {
     try {
-      const response = await api.post(`/twr/users/${userId}/conversations`, { title });
+      const response = await api.post(`/bella/users/${userId}/conversations`, { title });
       if (!response.data || !response.data.id) {
         throw new Error('Resposta inválida do servidor: conversa criada sem ID');
       }
@@ -77,29 +77,29 @@ export const apiService = {
   },
 
   async getUserConversations(userId) {
-    const response = await api.get(`/twr/users/${userId}/conversations`);
+    const response = await api.get(`/bella/users/${userId}/conversations`);
     return response.data;
   },
 
   async getConversation(conversationId) {
-    const response = await api.get(`/twr/conversations/${conversationId}`);
+    const response = await api.get(`/bella/conversations/${conversationId}`);
     return response.data;
   },
 
   async deleteConversation(conversationId, userId) {
-    const response = await api.delete(`/twr/conversations/${conversationId}?userId=${userId}`);
+    const response = await api.delete(`/bella/conversations/${conversationId}?userId=${userId}`);
     return response.data;
   },
 
   async updateConversationTitle(conversationId, title) {
-    const response = await api.patch(`/twr/conversations/${conversationId}`, { title });
+    const response = await api.patch(`/bella/conversations/${conversationId}`, { title });
     return response.data;
   },
 
   // Memória
   async getMemory(userId, conversationId) {
     try {
-      const response = await api.get(`/twr/memory?userId=${userId}&conversationId=${conversationId}`);
+      const response = await api.get(`/bella/memory?userId=${userId}&conversationId=${conversationId}`);
       return response.data;
     } catch (error) {
       console.error('Erro ao carregar memória:', error);
@@ -119,7 +119,7 @@ export const apiService = {
       return;
     }
 
-    const url = `${API_BASE_URL}/twr/chatbot`;
+    const url = `${API_BASE_URL}/bella/chatbot`;
     
     let response;
     try {

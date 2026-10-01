@@ -20,7 +20,7 @@ class AgentResourceIT {
     @Test
     void chatEndpointIsRegistered() {
         given()
-                .when().get("/twr/chat")
+                .when().get("/bella/chat")
                 .then()
                 .statusCode(405);
     }

@@ -1,17 +1,17 @@
 ####
 # Multi-stage build: Vue frontend (Vite) -> Quarkus JVM package -> JRE runtime.
 #
-# Mirrors the pattern used by the RAG project (see its Dockerfile), adapted to TWR's
+# Mirrors the pattern used by the RAG project (see its Dockerfile), adapted to Bella's
 # EC2/Docker Compose deployment (see docker-compose.yml and docs/aws.md).
 #
 # Build with (normally done for you by docker-compose.yml / the GitHub Actions
-# deploy workflow — see the "args" under the twr service):
+# deploy workflow — see the "args" under the bella service):
 #
 #   docker build -f src/main/docker/Dockerfile.jvm \
 #     --build-arg VITE_API_BASE_URL= \
 #     --build-arg VITE_ORION_USERS_URL=https://users.example.com \
 #     --build-arg VITE_GOOGLE_CLIENT_ID= \
-#     -t twr .
+#     -t bella .
 ####
 
 # ------------------------------------------------------------------------------
@@ -26,7 +26,7 @@ WORKDIR /app/frontend
 # Vite bakes VITE_* variables into the client bundle at build time. .dockerignore
 # excludes .env files from the build context (they may contain secrets and are not
 # meant to be baked into a shared image), so production values must be passed as
-# --build-arg instead (see docker-compose.yml, service "twr", "build.args").
+# --build-arg instead (see docker-compose.yml, service "bella", "build.args").
 #
 # VITE_API_BASE_URL defaults to "" (empty = same-origin) because the frontend is
 # served by this same Quarkus app in production.

@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
  *
  * <p>This discriminator is what lets the frontend tell apart user and
  * assistant messages when reloading persisted conversation history via
- * {@code GET /twr/memory} (see
+ * {@code GET /bella/memory} (see
  * {@code dev.rpmhub.adapter.in.rest.dto.MemoryResponse}). Without it, every
  * message serializes identically and the whole reloaded dialogue collapses
  * into a single (assistant) role on the frontend.</p>

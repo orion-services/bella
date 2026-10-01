@@ -1,4 +1,4 @@
-# twr
+# bella
 
 This project uses Quarkus, the Supersonic Subatomic Java Framework, and requires **Java 25**.
 
@@ -57,9 +57,9 @@ you can optionally run a separate Vite dev server instead (`cd frontend && npm
 run dev`, served at `http://localhost:5173`, proxying API calls to `:8080`) —
 but that's a pure convenience for frontend-only iteration, not required.
 
-If `frontend/.env` is missing, `VITE_ORION_USERS_URL` silently falls back to
-`http://localhost:8080` — **TWR's own port** — and every login/signup call 404s
-against the Quarkus backend instead of reaching Orion Users. Always create
+If `frontend/.env` is missing, `VITE_ORION_USERS_URL` falls back to
+`http://localhost:8082` (the Orion Users port published by Docker Compose).
+Bella itself listens on `8080` and does not implement `/users/*`. Always create
 `frontend/.env` from `frontend/.env.example` before testing the web UI locally.
 
 ## Packaging and running the application
@@ -97,7 +97,7 @@ Or, if you don't have GraalVM installed, you can run the native executable build
 ./mvnw package -Dnative -Dquarkus.native.container-build=true
 ```
 
-You can then execute your native executable with: `./target/twr-1.0.0-runner`
+You can then execute your native executable with: `./target/bella-1.0.0-runner`
 
 If you want to learn more about building native executables, please consult <https://quarkus.io/guides/maven-tooling>.
 

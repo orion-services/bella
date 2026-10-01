@@ -44,16 +44,16 @@ import jakarta.ws.rs.core.Response;
  * REST resource that exposes the authenticated (Orion Users) web conversation flow:
  * multiple named conversations per user, memory lookup and the streaming chatbot
  * endpoint used by the Vue frontend. Mirrors the contract of the RAG project's
- * {@code RagController}, adapted to the TWR domain.
+ * {@code RagController}, adapted to the Bella domain.
  *
  * <p>All endpoints here require a valid Orion Users JWT (see
  * {@code mp.jwt.verify.*} in {@code application.properties} and {@link JwtAuthFilter}).
- * The legacy {@code /twr/chat} (phone-based) endpoint, used exclusively by the
- * WhatsApp channel, is untouched and lives in {@link TwrResource}.
+ * The legacy {@code /bella/chat} (phone-based) endpoint, used exclusively by the
+ * WhatsApp channel, is untouched and lives in {@link BellaResource}.
  *
  * @author Rodrigo Prestes Machado
  */
-@Path("/twr")
+@Path("/bella")
 public class ConversationResource {
 
     /** Driving port used to manage and chat within conversations. */
@@ -135,10 +135,13 @@ public class ConversationResource {
     }
 
     /**
-     * Retrieves a conversation by its unique identifier.
+     * Retrieves a conversation by its unique identifier, if it belongs to the
+     * authenticated user.
      *
      * @param conversationId the conversation's unique identifier
      * @return the matching conversation
+     * @throws WebApplicationException with 404 when the conversation does not exist, or 403
+     *         when it belongs to another user
      */
     @GET
     @Path("/conversations/{conversationId}")
@@ -146,10 +149,10 @@ public class ConversationResource {
     @RolesAllowed("user")
     @Blocking
     public Chat getConversation(@PathParam("conversationId") String conversationId) {
-        authenticatedUser();
+        User user = authenticatedUser();
         Log.info("Getting conversation: " + conversationId);
-        return conversationUseCase.getConversation(conversationId)
-                .orElseThrow(() -> new WebApplicationException("Conversa não encontrada", Response.Status.NOT_FOUND));
+        return handleOwnership(() ->
+                conversationUseCase.getOwnedConversation(conversationId, user.getOrionUserHash()));
     }
 
     /**
@@ -201,7 +204,9 @@ public class ConversationResource {
      *
      * @param userId         query param (ignored; resolved from JWT)
      * @param conversationId the conversation identifier
-     * @return the conversation memory, or {@code null} when parameters are missing
+     * @return the conversation memory, or {@code null} when {@code conversationId} is missing
+     * @throws WebApplicationException with 404 when the conversation does not exist, or 403
+     *         when it belongs to another user
      */
     @GET
     @Path("/memory")
@@ -213,11 +218,11 @@ public class ConversationResource {
         if (conversationId == null) {
             return null;
         }
-        authenticatedUser();
+        User user = authenticatedUser();
         Log.info("Memory Conversation: " + conversationId);
-        return conversationUseCase.getConversation(conversationId)
-                .map(MemoryResponse::fromChat)
-                .orElse(null);
+        Chat chat = handleOwnership(() ->
+                conversationUseCase.getOwnedConversation(conversationId, user.getOrionUserHash()));
+        return MemoryResponse.fromChat(chat);
     }
 
     /**

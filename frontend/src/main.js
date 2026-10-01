@@ -12,7 +12,7 @@ import { useAuthStore } from './stores/auth';
 import router from './router';
 
 function initialTheme() {
-  const saved = localStorage.getItem('twr-theme');
+  const saved = localStorage.getItem('bella-theme');
   if (saved === 'light' || saved === 'dark') {
     return saved;
   }
@@ -23,8 +23,8 @@ function initialTheme() {
 }
 
 const brandColors = {
-  primary: '#6A3D09',
-  'on-primary': '#FFFFFF',
+  primary: '#FF6B6B',
+  'on-primary': '#1A1208',
   secondary: '#A56A2A',
   'on-secondary': '#FFFFFF'
 };
@@ -43,9 +43,6 @@ const vuetify = createVuetify({
       dark: {
         colors: {
           ...brandColors,
-          // No fundo escuro o marrom puro some; este tom é o mesmo matiz, mais claro.
-          primary: '#C4843A',
-          'on-primary': '#1A1208',
           secondary: '#E2B070',
           'on-secondary': '#1A1208'
         }

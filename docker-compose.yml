@@ -1,18 +1,18 @@
 ####
-# Production stack for twr — meant to run on a single EC2 instance.
+# Production stack for bella — meant to run on a single EC2 instance.
 #
 # Services:
 #   caddy        - reverse proxy, automatic HTTPS (Let's Encrypt) for DOMAIN
-#   twr          - the Quarkus app itself (this repo), built from src/main/docker/Dockerfile.jvm.
+#   bella          - the Quarkus app itself (this repo), built from src/main/docker/Dockerfile.jvm.
 #                  Runs the "prod" Quarkus profile, which uses OpenAI (gpt-4o-mini) as the chat
 #                  model instead of Ollama (see application.properties) — no local LLM runtime
 #                  needed on the instance.
 #   postgres     - pgvector-enabled Postgres, chat persistence + embeddings storage
 #   redis        - conversation memory store
 #   orion-users  - external auth service (login/registration/2FA) that issues the JWTs the
-#                  frontend sends to twr (see mp.jwt.verify.* in application.properties).
-#                  Shares the same Postgres instance/database as twr (its own tables,
-#                  managed by its own Hibernate/import.sql — no migration conflict with twr's
+#                  frontend sends to bella (see mp.jwt.verify.* in application.properties).
+#                  Shares the same Postgres instance/database as bella (its own tables,
+#                  managed by its own Hibernate/import.sql — no migration conflict with bella's
 #                  Flyway-managed schema). Reachable either directly on
 #                  ORION_USERS_HOST_PORT (handy for local dev, VITE_ORION_USERS_URL=
 #                  http://localhost:8082) or through Caddy at https://$DOMAIN/orion-users
@@ -41,13 +41,13 @@ services:
       - caddy_data:/data
       - caddy_config:/config
     environment:
-      - DOMAIN=${DOMAIN:?set DOMAIN in .env, e.g. twr.example.com}
+      - DOMAIN=${DOMAIN:?set DOMAIN in .env, e.g. bella.example.com}
       - ACME_EMAIL=${ACME_EMAIL:?set ACME_EMAIL in .env for Let's Encrypt registration}
     depends_on:
-      - twr
+      - bella
       - orion-users
 
-  twr:
+  bella:
     build:
       context: .
       dockerfile: src/main/docker/Dockerfile.jvm
@@ -60,14 +60,14 @@ services:
     restart: unless-stopped
     environment:
       QUARKUS_PROFILE: prod
-      POSTGRES_USER: ${POSTGRES_USER:-twr}
+      POSTGRES_USER: ${POSTGRES_USER:-bella}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
-      JDBC_URL: jdbc:postgresql://postgres:5432/twr
+      JDBC_URL: jdbc:postgresql://postgres:5432/bella
       REDIS_URL: redis://redis:6379
       RAG_LOCATION: /work/rag
       WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID:-}
       WHATSAPP_ACCESS_TOKEN: ${WHATSAPP_ACCESS_TOKEN:-}
-      WHATSAPP_VERIFY_TOKEN: ${WHATSAPP_VERIFY_TOKEN:-twr-webhook-verify}
+      WHATSAPP_VERIFY_TOKEN: ${WHATSAPP_VERIFY_TOKEN:-bella-webhook-verify}
       WHATSAPP_APP_SECRET: ${WHATSAPP_APP_SECRET:-}
       # Required in prod: used as the chat model (gpt-4o-mini) and for WhatsApp audio
       # transcription (Whisper).
@@ -85,14 +85,14 @@ services:
     image: pgvector/pgvector:pg17
     restart: unless-stopped
     environment:
-      POSTGRES_DB: twr
-      POSTGRES_USER: ${POSTGRES_USER:-twr}
+      POSTGRES_DB: bella
+      POSTGRES_USER: ${POSTGRES_USER:-bella}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./infra/postgres-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-twr} -d twr"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bella} -d bella"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -117,8 +117,8 @@ services:
       QUARKUS_DEVSERVICES_ENABLED: "false"
       # Keep credentials out of the URI so passwords containing reserved URL
       # characters remain valid and are not leaked by URI parsing errors.
-      QUARKUS_DATASOURCE_REACTIVE_URL: postgresql://postgres:5432/twr
-      QUARKUS_DATASOURCE_USERNAME: ${POSTGRES_USER:-twr}
+      QUARKUS_DATASOURCE_REACTIVE_URL: postgresql://postgres:5432/bella
+      QUARKUS_DATASOURCE_USERNAME: ${POSTGRES_USER:-bella}
       QUARKUS_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       # Real Gmail SMTP in both dev and production. Use a Google App Password,
       # never the account's regular password.

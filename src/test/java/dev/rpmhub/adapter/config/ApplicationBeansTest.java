@@ -13,7 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import dev.rpmhub.adapter.out.ai.TwrAgent;
+import dev.rpmhub.adapter.out.ai.BellaAgent;
 import dev.rpmhub.application.ChatService;
 import dev.rpmhub.domain.model.RagQuery;
 import dev.rpmhub.domain.model.RagResponse;
@@ -49,7 +49,7 @@ class ApplicationBeansTest {
      * Driven port mocked to isolate the wiring under test.
      */
     @Mock
-    private TwrAgent twrAgent;
+    private BellaAgent bellaAgent;
 
     /**
      * Wiring class under test.
@@ -64,7 +64,7 @@ class ApplicationBeansTest {
         applicationBeans = new ApplicationBeans();
         applicationBeans.chatRepository = chatRepository;
         applicationBeans.embeddingRepository = embeddingRepository;
-        applicationBeans.twrAgent = twrAgent;
+        applicationBeans.bellaAgent = bellaAgent;
     }
 
     /**
@@ -76,7 +76,7 @@ class ApplicationBeansTest {
         when(chatRepository.findLastByPhone("5511999999999")).thenReturn(Optional.empty());
         when(embeddingRepository.searchChunks(org.mockito.ArgumentMatchers.any(RagQuery.class)))
                 .thenReturn(new RagResponse("oi", List.of(), 0.0));
-        when(twrAgent.answer("5511999999999", "", "oi")).thenReturn(Multi.createFrom().items("resposta"));
+        when(bellaAgent.answer("5511999999999", "", "oi")).thenReturn(Multi.createFrom().items("resposta"));
 
         ChatUseCase chatUseCase = applicationBeans.chatUseCase();
 

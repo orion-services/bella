@@ -1,5 +1,5 @@
 ####
-# Low-cost, single-EC2-instance infrastructure for twr.
+# Low-cost, single-EC2-instance infrastructure for bella.
 #
 # Everything (app + Postgres/pgvector + Redis + Ollama) runs as Docker Compose
 # services on one Graviton (ARM) EC2 instance. No RDS, ElastiCache or ALB — those
@@ -55,9 +55,9 @@ data "aws_ami" "al2023_arm64" {
 # Security group — only 80/443 inbound (Caddy). No SSH port by default;
 # use SSM Session Manager for shell access (see outputs.tf).
 # ------------------------------------------------------------------
-resource "aws_security_group" "twr" {
+resource "aws_security_group" "bella" {
   name        = "${var.project_name}-sg"
-  description = "twr: allow HTTP/HTTPS from the internet, admin access via SSM only"
+  description = "bella: allow HTTP/HTTPS from the internet, admin access via SSM only"
   vpc_id      = data.aws_vpc.selected.id
 
   ingress {
@@ -106,7 +106,7 @@ resource "aws_security_group" "twr" {
 # single SSM parameter holding the GitHub PAT used to register the
 # self-hosted Actions runner at boot (see user_data.sh.tftpl).
 # ------------------------------------------------------------------
-resource "aws_iam_role" "twr_instance" {
+resource "aws_iam_role" "bella_instance" {
   name = "${var.project_name}-instance-role"
 
   assume_role_policy = jsonencode({
@@ -124,7 +124,7 @@ resource "aws_iam_role" "twr_instance" {
 }
 
 resource "aws_iam_role_policy_attachment" "ssm_core" {
-  role       = aws_iam_role.twr_instance.name
+  role       = aws_iam_role.bella_instance.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
@@ -132,7 +132,7 @@ resource "aws_iam_role_policy_attachment" "ssm_core" {
 # for principals in the account, so no extra kms:Decrypt statement is needed.
 resource "aws_iam_role_policy" "github_runner_pat" {
   name = "${var.project_name}-github-runner-pat"
-  role = aws_iam_role.twr_instance.id
+  role = aws_iam_role.bella_instance.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -144,20 +144,20 @@ resource "aws_iam_role_policy" "github_runner_pat" {
   })
 }
 
-resource "aws_iam_instance_profile" "twr_instance" {
+resource "aws_iam_instance_profile" "bella_instance" {
   name = "${var.project_name}-instance-profile"
-  role = aws_iam_role.twr_instance.name
+  role = aws_iam_role.bella_instance.name
 }
 
 # ------------------------------------------------------------------
 # EC2 instance
 # ------------------------------------------------------------------
-resource "aws_instance" "twr" {
+resource "aws_instance" "bella" {
   ami                    = data.aws_ami.al2023_arm64.id
   instance_type          = var.instance_type
   subnet_id              = local.subnet_id
-  vpc_security_group_ids = [aws_security_group.twr.id]
-  iam_instance_profile   = aws_iam_instance_profile.twr_instance.name
+  vpc_security_group_ids = [aws_security_group.bella.id]
+  iam_instance_profile   = aws_iam_instance_profile.bella_instance.name
   user_data = templatefile("${path.module}/user_data.sh.tftpl", {
     project_name         = var.project_name
     aws_region           = var.aws_region
@@ -192,7 +192,7 @@ resource "aws_instance" "twr" {
 # Extra EBS volume for Postgres/Redis/Ollama data, kept independent from the
 # root volume/instance lifecycle.
 resource "aws_ebs_volume" "data" {
-  availability_zone = aws_instance.twr.availability_zone
+  availability_zone = aws_instance.bella.availability_zone
   size              = var.data_volume_size_gb
   type              = var.data_volume_type
 
@@ -205,14 +205,14 @@ resource "aws_ebs_volume" "data" {
 resource "aws_volume_attachment" "data" {
   device_name = "/dev/sdf" # surfaces as /dev/nvme1n1 on Nitro instances (t4g); handled in user_data.sh
   volume_id   = aws_ebs_volume.data.id
-  instance_id = aws_instance.twr.id
+  instance_id = aws_instance.bella.id
 }
 
 # ------------------------------------------------------------------
 # Elastic IP — stable public address to point DNS at.
 # ------------------------------------------------------------------
-resource "aws_eip" "twr" {
-  instance = aws_instance.twr.id
+resource "aws_eip" "bella" {
+  instance = aws_instance.bella.id
   domain   = "vpc"
 
   tags = {

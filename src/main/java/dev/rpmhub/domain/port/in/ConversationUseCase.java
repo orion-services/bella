@@ -51,6 +51,17 @@ public interface ConversationUseCase {
     Optional<Chat> getConversation(String conversationId);
 
     /**
+     * Retrieves a conversation by id when it belongs to the given owner.
+     *
+     * @param conversationId the conversation id
+     * @param orionUserHash  the Orion Users hash of the caller, for ownership validation
+     * @return the owned conversation
+     * @throws java.util.NoSuchElementException if the conversation does not exist
+     * @throws SecurityException                if the conversation belongs to a different owner
+     */
+    Chat getOwnedConversation(String conversationId, String orionUserHash);
+
+    /**
      * Renames a conversation, if it belongs to the given owner.
      *
      * @param conversationId the conversation id

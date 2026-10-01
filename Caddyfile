@@ -10,7 +10,7 @@
 	}
 
 	handle {
-		reverse_proxy twr:8080
+		reverse_proxy bella:8080
 	}
 
 	encode gzip

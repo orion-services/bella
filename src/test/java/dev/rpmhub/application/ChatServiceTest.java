@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import dev.rpmhub.adapter.out.ai.TwrAgent;
+import dev.rpmhub.adapter.out.ai.BellaAgent;
 import dev.rpmhub.domain.model.Chat;
 import dev.rpmhub.domain.model.RagQuery;
 import dev.rpmhub.domain.model.RagResponse;
@@ -47,7 +47,7 @@ class ChatServiceTest {
     /**
      * Assistant test double that records invoked prompts.
      */
-    private FakeTwrAgent twrAgent;
+    private FakeBellaAgent bellaAgent;
 
     /**
      * Service under test.
@@ -61,8 +61,8 @@ class ChatServiceTest {
     void setUp() {
         chatRepository = new FakeChatRepository();
         embeddingRepository = new FakeEmbeddingRepository();
-        twrAgent = new FakeTwrAgent();
-        chatService = new ChatService(chatRepository, embeddingRepository, twrAgent, 3, 0.6, 30 * MINUTE_MS);
+        bellaAgent = new FakeBellaAgent();
+        chatService = new ChatService(chatRepository, embeddingRepository, bellaAgent, 3, 0.6, 30 * MINUTE_MS);
     }
 
     /**
@@ -73,7 +73,7 @@ class ChatServiceTest {
         List<String> chunks = chatService.chat("5511999999999", "oi").collect().asList().await().indefinitely();
 
         assertEquals(List.of("resposta"), chunks);
-        assertEquals(List.of("oi"), twrAgent.prompts);
+        assertEquals(List.of("oi"), bellaAgent.prompts);
         assertTrue(chatRepository.findLastByPhone("5511999999999").isPresent());
         Chat chat = chatRepository.findLastByPhone("5511999999999").orElseThrow();
         assertEquals(1, chat.getUserMessages().size());
@@ -81,7 +81,7 @@ class ChatServiceTest {
     }
 
     /**
-     * Ensures a follow-up within thirty minutes reuses the same chat.
+     * Ensures a follow-up within thirty minutes reuses the same chat and the same memory id.
      */
     @Test
     void chat_reusesChat_whenWithinInactivityThreshold() {
@@ -93,11 +93,12 @@ class ChatServiceTest {
 
         assertSame(first, second);
         assertEquals(2, second.getUserMessages().size());
-        assertEquals(List.of("oi", "tudo bem?"), twrAgent.prompts);
+        assertEquals(List.of("oi", "tudo bem?"), bellaAgent.prompts);
+        assertEquals(List.of(first.getId(), first.getId()), bellaAgent.memoryIds);
     }
 
     /**
-     * Ensures a new chat is opened when the idle time exceeds thirty minutes.
+     * Ensures a new chat, with a new memory id, is opened when the idle time exceeds thirty minutes.
      */
     @Test
     void chat_opensNewChat_whenIdleMoreThanThirtyMinutes() {
@@ -112,6 +113,7 @@ class ChatServiceTest {
         assertNotEquals(first.getId(), next.getId());
         assertEquals(1, next.getUserMessages().size());
         assertEquals("voltei", next.getUserMessages().get(0).getMessage());
+        assertEquals(List.of(first.getId(), next.getId()), bellaAgent.memoryIds);
     }
 
     /**
@@ -120,7 +122,7 @@ class ChatServiceTest {
      */
     @Test
     void chat_persistsAgentReply_whenStreamCompletes() {
-        twrAgent.chunks = List.of("res", "pos", "ta");
+        bellaAgent.chunks = List.of("res", "pos", "ta");
 
         List<String> chunks = chatService.chat("5511999999999", "oi").collect().asList().await().indefinitely();
 
@@ -157,7 +159,7 @@ class ChatServiceTest {
 
         chatService.chat("5511999999999", "oi").collect().asList().await().indefinitely();
 
-        assertEquals(List.of("trecho relevante"), twrAgent.contexts);
+        assertEquals(List.of("trecho relevante"), bellaAgent.contexts);
     }
 
     /**
@@ -225,12 +227,17 @@ class ChatServiceTest {
     /**
      * Fake AI service that records prompts/contexts and returns a fixed chunk.
      */
-    private static final class FakeTwrAgent implements TwrAgent {
+    private static final class FakeBellaAgent implements BellaAgent {
 
         /**
          * Prompts received by the AI service.
          */
         private final List<String> prompts = new ArrayList<>();
+
+        /**
+         * Memory ids received by the AI service, one per call.
+         */
+        private final List<String> memoryIds = new ArrayList<>();
 
         /**
          * Contexts received by the AI service.
@@ -244,6 +251,7 @@ class ChatServiceTest {
 
         @Override
         public Multi<String> answer(String memoryId, String context, String prompt) {
+            memoryIds.add(memoryId);
             contexts.add(context);
             prompts.add(prompt);
             return Multi.createFrom().iterable(chunks);

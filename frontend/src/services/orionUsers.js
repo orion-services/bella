@@ -41,14 +41,15 @@ export function unvalidatedEmailMessage(user) {
 }
 
 // Orion Users API Service
-// Só cai no default localhost quando a variável não foi definida em nenhum momento
-// do build (undefined) — em produção, VITE_ORION_USERS_URL deve apontar para a URL
-// pública real do serviço Orion Users (não há fallback seguro para produção).
+// Só cai no default quando a variável não foi definida em nenhum momento do build
+// (undefined). Em produção, VITE_ORION_USERS_URL deve apontar para a URL pública
+// real do serviço. O default local é a porta publicada pelo docker compose
+// (ORION_USERS_HOST_PORT); 8080 é o Bella e devolve 405 para /users/*.
 const orionUsersUrlFromEnv = import.meta.env?.VITE_ORION_USERS_URL;
 const ORION_USERS_URL =
   orionUsersUrlFromEnv !== undefined
     ? orionUsersUrlFromEnv
-    : 'http://localhost:8080';
+    : 'http://localhost:8082';
 
 const orionUsersApi = axios.create({
   baseURL: ORION_USERS_URL,

@@ -15,7 +15,7 @@ import dev.rpmhub.domain.model.Chat;
 import dev.rpmhub.domain.model.Message;
 
 /**
- * Response body for {@code GET /twr/memory}: the persisted message history of a
+ * Response body for {@code GET /bella/memory}: the persisted message history of a
  * conversation, mirroring the shape the frontend expects from the RAG chatbot memory
  * endpoint.
  *

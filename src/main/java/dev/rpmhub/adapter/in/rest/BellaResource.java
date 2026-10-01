@@ -24,12 +24,12 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 /**
- * REST resource that exposes the TWR chat endpoint.
+ * REST resource that exposes the Bella chat endpoint.
  *
  * @author Rodrigo Prestes Machado
  */
-@Path("/twr")
-public class TwrResource {
+@Path("/bella")
+public class BellaResource {
 
     /**
      * Driving port used to process chat requests.
@@ -42,7 +42,7 @@ public class TwrResource {
      * @param chatUseCase application port for chatting
      */
     @Inject
-    public TwrResource(ChatUseCase chatUseCase) {
+    public BellaResource(ChatUseCase chatUseCase) {
         this.chatUseCase = chatUseCase;
     }
 

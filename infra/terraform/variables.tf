@@ -7,13 +7,13 @@ variable "aws_region" {
 variable "project_name" {
   description = "Name/tag prefix used for all resources created by this stack."
   type        = string
-  default     = "twr"
+  default     = "bella"
 }
 
 variable "instance_type" {
   description = <<-EOT
     EC2 instance type. t4g.* (Graviton/ARM) is cheaper than equivalent x86 (t3.*)
-    instances and is enough to run twr + Postgres + Redis + Ollama (gemma4) on a
+    instances and is enough to run bella + Postgres + Redis + Ollama (gemma4) on a
     single box. Bump to t4g.large if Ollama inference feels too slow/OOMs.
   EOT
   type        = string
@@ -67,13 +67,13 @@ variable "subnet_id" {
 variable "github_repo" {
   description = "GitHub repository (owner/name) the self-hosted Actions runner registers against."
   type        = string
-  default     = "orion-services/twr"
+  default     = "orion-services/bella"
 }
 
 variable "github_runner_labels" {
   description = "Comma-separated labels for the self-hosted runner. Must match `runs-on` in .github/workflows/deploy.yml."
   type        = string
-  default     = "twr-prod"
+  default     = "bella-prod"
 }
 
 variable "github_pat_ssm_parameter" {
@@ -84,5 +84,5 @@ variable "github_pat_ssm_parameter" {
     secret never lands in the state) — see docs/aws.md.
   EOT
   type        = string
-  default     = "/twr/github-runner-pat"
+  default     = "/bella/github-runner-pat"
 }

@@ -181,7 +181,7 @@ export default {
         }
 
         // Use hash as userId (backend syncs automatically via JWT)
-        // Orion Users hash is used to map with the TWR system user
+        // Orion Users hash is used to map with the Bella system user
         this.userId = user.id || user.hash || user.email;
         
         if (!this.userId) {

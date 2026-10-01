@@ -96,7 +96,7 @@ public abstract class Message {
      * apart user and assistant messages when loading persisted conversation
      * history (see {@code dev.rpmhub.adapter.in.rest.dto.MemoryResponse}).
      *
-     * <p>Without this, every message in {@code GET /twr/memory} responses is
+     * <p>Without this, every message in {@code GET /bella/memory} responses is
      * indistinguishable from the others once history is reloaded from
      * storage, since the concrete subtype otherwise carries no explicit
      * discriminator in the JSON payload.</p>

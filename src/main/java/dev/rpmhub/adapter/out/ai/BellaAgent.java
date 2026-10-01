@@ -17,23 +17,25 @@ import io.smallrye.mutiny.Multi;
 import jakarta.enterprise.context.ApplicationScoped;
 
 /**
- * LangChain4j AI service that acts as Tutor TWR, a writing coach for 7th-grade students.
+ * LangChain4j AI service that acts as Bella, a writing coach for 7th-grade students.
  *
  * @author Rodrigo Prestes Machado
  */
 @RegisterAiService
 @ApplicationScoped
-public interface TwrAgent {
+public interface BellaAgent {
 
     /**
-     * Streams a Tutor TWR reply grounded in the conversation and optional RAG context.
+     * Streams a Bella reply grounded in the conversation and optional RAG context.
      *
-     * @param memoryId stable identifier (phone number) used to isolate conversational memory per user
+     * @param memoryId stable identifier of the conversation, used to isolate conversational memory.
+     *                 On WhatsApp this is the chat id (a new id after 30 minutes of inactivity);
+     *                 on the web it is the conversation id chosen by the user
      * @param context  relevant passages retrieved from the vector store (may be empty)
      * @param prompt   the student message
      * @return a multi that emits the response chunks
      */
-    @SystemMessage(fromResource = "/prompts/tutor-twr.md")
+    @SystemMessage(fromResource = "/prompts/bella.md")
     @UserMessage("Contexto: {context}\n\nPergunta: {prompt}")
     Multi<String> answer(@MemoryId String memoryId, String context, String prompt);
 

@@ -4,7 +4,7 @@
       <v-app-bar-title>
         <span class="app-bar-brand">
           <img :src="appIcon" alt="" class="app-bar-logo" />
-          <span>Tutor TWR</span>
+          <span>Bella</span>
         </span>
       </v-app-bar-title>
       <v-spacer></v-spacer>
@@ -40,7 +40,7 @@
 <script>
 import { useTheme } from 'vuetify';
 import { useAuthStore } from './stores/auth';
-import appIcon from './assets/icon1.png';
+import appIcon from './assets/icon2.png';
 
 export default {
   name: 'App',
@@ -61,7 +61,7 @@ export default {
     toggleTheme() {
       const next = this.isDark ? 'light' : 'dark';
       this.theme.global.name.value = next;
-      localStorage.setItem('twr-theme', next);
+      localStorage.setItem('bella-theme', next);
     },
     logout() {
       const authStore = useAuthStore();

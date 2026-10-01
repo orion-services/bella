@@ -1,6 +1,6 @@
-# Deploy do twr na AWS (infra de baixo custo, EC2 única)
+# Deploy do bella na AWS (infra de baixo custo, EC2 única)
 
-Este guia cobre o deploy do twr em uma única instância EC2, rodando o app,
+Este guia cobre o deploy do bella em uma única instância EC2, rodando o app,
 Postgres+pgvector e Redis via Docker Compose, com HTTPS automático via Caddy.
 É a opção mais barata: sem RDS, ElastiCache ou ALB. Em produção o chat usa a
 API da OpenAI (`gpt-4o-mini`) em vez de um LLM local — não é preciso rodar
@@ -32,7 +32,7 @@ fica fora do Terraform para o segredo nunca ir parar no state.
 
 1. No GitHub, crie um **fine-grained personal access token** em
    **Settings -> Developer settings -> Personal access tokens -> Fine-grained
-   tokens**, com acesso somente ao repositório `orion-services/twr` e a
+   tokens**, com acesso somente ao repositório `orion-services/bella` e a
    permissão **Administration: Read and write** (é o que permite gerar tokens
    de registro de runner).
 2. Salve o token no SSM, na mesma região da infraestrutura:
@@ -40,14 +40,14 @@ fica fora do Terraform para o segredo nunca ir parar no state.
 ```bash
 aws ssm put-parameter \
   --region sa-east-1 \
-  --name /twr/github-runner-pat \
+  --name /bella/github-runner-pat \
   --type SecureString \
   --value '<GITHUB_PAT>'
 # para trocar o token depois: acrescente --overwrite
 ```
 
 Se o parâmetro não existir no boot, a instância sobe normalmente, sem runner
-(um aviso aparece em `/var/log/twr-user-data.log`). Veja o passo 8.1 para
+(um aviso aparece em `/var/log/bella-user-data.log`). Veja o passo 8.1 para
 registrar o runner depois.
 
 ## 1. Provisionar a infraestrutura com Terraform
@@ -62,8 +62,8 @@ terraform apply
 Isso cria, em `sa-east-1`:
 - 1 instância EC2 `t4g.medium` (Amazon Linux 2023, ARM/Graviton) com Docker, Compose, buildx e Amazon Corretto 25
 - Security Group com apenas as portas 80 e 443 abertas (sem porta 22 — acesso administrativo via SSM)
-- IAM role com a policy `AmazonSSMManagedInstanceCore` (acesso via Session Manager) e permissão de leitura somente no parâmetro `/twr/github-runner-pat`
-- Runner self-hosted do GitHub Actions (label `twr-prod`) instalado como serviço em `/opt/actions-runner`
+- IAM role com a policy `AmazonSSMManagedInstanceCore` (acesso via Session Manager) e permissão de leitura somente no parâmetro `/bella/github-runner-pat`
+- Runner self-hosted do GitHub Actions (label `bella-prod`) instalado como serviço em `/opt/actions-runner`
 - Volume EBS extra (40 GiB) para dados do Postgres/Redis
 - Elastic IP associado à instância
 
@@ -80,7 +80,7 @@ Para customizar (tipo de instância, região, tamanho de disco), copie
 ## 2. Apontar o DNS
 
 Crie um registro `A` no seu provedor de DNS apontando o domínio/subdomínio
-escolhido (ex.: `twr.example.com`) para o `public_ip` retornado pelo
+escolhido (ex.: `bella.example.com`) para o `public_ip` retornado pelo
 Terraform. Aguarde a propagação antes do passo 4 (o Caddy precisa resolver o
 domínio para emitir o certificado Let's Encrypt).
 
@@ -120,16 +120,16 @@ Dentro da sessão SSM (já como `ec2-user` após `sudo su - ec2-user` ou usando
 `sudo -u ec2-user -i`):
 
 ```bash
-cd /opt/twr
-git clone https://github.com/orion-services/twr.git .
+cd /opt/bella
+git clone https://github.com/orion-services/bella.git .
 cp .env.example .env
 nano .env   # preencha DOMAIN, ACME_EMAIL, POSTGRES_PASSWORD, WHATSAPP_*, OPENAI_API_KEY
 ```
 
 Variáveis obrigatórias em `.env`:
-- `DOMAIN` — o domínio apontado no passo 2 (ex.: `twr.example.com`)
+- `DOMAIN` — o domínio apontado no passo 2 (ex.: `bella.example.com`)
 - `ACME_EMAIL` — e-mail usado pelo Caddy no registro do Let's Encrypt
-- `POSTGRES_PASSWORD` — senha forte para o banco (compartilhado entre `twr` e `orion-users`)
+- `POSTGRES_PASSWORD` — senha forte para o banco (compartilhado entre `bella` e `orion-users`)
 - `OPENAI_API_KEY` — usada como modelo de chat em produção (`gpt-4o-mini`); gere em
   [platform.openai.com](https://platform.openai.com/api-keys)
 - `VITE_ORION_USERS_URL` — **`https://<DOMAIN>/orion-users`** (mesmo domínio/TLS do app,
@@ -161,14 +161,14 @@ partir do código-fonte — não é preciso rodar `./mvnw package` manualmente a
 sudo usermod -aG docker ec2-user   # se ainda não estiver no grupo docker (relogar depois)
 newgrp docker
 
-docker compose -p twr up -d --build
+docker compose -p bella up -d --build
 ```
 
 Isso sobe toda a stack, incluindo o `orion-users` (serviço de login/cadastro/2FA,
 construído diretamente de `github.com/orion-services/users`, compartilhando o mesmo
-Postgres do `twr`).
+Postgres do `bella`).
 
-O `-p twr` fixa o nome do projeto Compose — importante para que o deploy
+O `-p bella` fixa o nome do projeto Compose — importante para que o deploy
 automático via CI (passo 8) reutilize os mesmos containers/volumes, mesmo
 rodando a partir de um diretório de checkout diferente.
 
@@ -176,13 +176,13 @@ Acompanhe os logs até o app subir (a ingestão de documentos/scraping no
 startup pode levar 1-2 minutos):
 
 ```bash
-docker compose -p twr logs -f twr
+docker compose -p bella logs -f bella
 ```
 
 ## 6. Validar
 
 ```bash
-curl -I https://twr.example.com/
+curl -I https://bella.example.com/
 ```
 
 Deve responder `200 OK` com certificado válido (emitido automaticamente pelo
@@ -194,7 +194,7 @@ Se for usar a integração com WhatsApp, configure no painel do Meta for
 Developers o webhook apontando para:
 
 ```
-https://twr.example.com/webhook/whatsapp
+https://bella.example.com/webhook/whatsapp
 ```
 
 Usando o `WHATSAPP_VERIFY_TOKEN` definido no `.env`.
@@ -202,7 +202,7 @@ Usando o `WHATSAPP_VERIFY_TOKEN` definido no `.env`.
 ## 8. CI/CD com GitHub Actions
 
 Todo **push na branch `main` faz rebuild e restart automático do container
-`twr` na EC2**.
+`bella` na EC2**.
 
 A abordagem usada é um **self-hosted runner do GitHub Actions rodando na
 própria instância EC2** — o workflow executa localmente na máquina, com as
@@ -214,15 +214,15 @@ como secret no GitHub.
 O runner é registrado sozinho no primeiro boot da instância pelo
 `infra/terraform/user_data.sh.tftpl`, que:
 
-1. lê o PAT do parâmetro SSM `/twr/github-runner-pat` (passo 0);
+1. lê o PAT do parâmetro SSM `/bella/github-runner-pat` (passo 0);
 2. troca o PAT por um token de registro de curta duração na API do GitHub;
 3. baixa a versão mais recente do runner Linux ARM64 em `/opt/actions-runner`;
-4. registra o runner em `orion-services/twr` com o label `twr-prod` e o
+4. registra o runner em `orion-services/bella` com o label `bella-prod` e o
    instala como serviço systemd (sobrevive a reboots).
 
 Para conferir: **Settings** do repositório -> **Actions** -> **Runners** deve
-listar o runner `twr-<hostname>` como *Idle*. Na instância, o log fica em
-`/var/log/twr-user-data.log`.
+listar o runner `bella-<hostname>` como *Idle*. Na instância, o log fica em
+`/var/log/bella-user-data.log`.
 
 Repositório, labels e nome do parâmetro são configuráveis pelas variáveis
 `github_repo`, `github_runner_labels` e `github_pat_ssm_parameter` do
@@ -242,16 +242,16 @@ volume de dados e pula o registro se o runner já estiver configurado.
 
 Já existe em [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml):
 dispara em todo push na `main` (ou manualmente, em **Actions -> Deploy to AWS
--> Run workflow**), valida a configuração do Compose, reconstrói `twr` e
+-> Run workflow**), valida a configuração do Compose, reconstrói `bella` e
 `orion-users` e recria o `caddy` para carregar eventuais mudanças no
 `Caddyfile`. O workflow reutiliza o `.env` já configurado manualmente em
-`/opt/twr/.env` (passo 4) — o `.env` nunca entra no repositório nem em secrets
+`/opt/bella/.env` (passo 4) — o `.env` nunca entra no repositório nem em secrets
 do GitHub. O caminho fixo é necessário porque o `actions/checkout` limpa
 arquivos não versionados no diretório de trabalho do runner a cada execução
 (o `.env`, sendo `.gitignore`d, seria apagado se estivesse dentro do checkout).
-O `-p twr` garante que o CI atualiza os mesmos containers/volumes do deploy
+O `-p bella` garante que o CI atualiza os mesmos containers/volumes do deploy
 manual, mesmo rodando de um diretório diferente (o runner faz checkout em seu
-próprio `_work/`, não em `/opt/twr`).
+próprio `_work/`, não em `/opt/bella`).
 
 ### 8.3 Nota de segurança
 
@@ -264,10 +264,10 @@ código não confiável de pushes diretos.
 
 | Ação | Comando |
 |------|---------|
-| Ver logs | `docker compose -p twr logs -f [servico]` |
-| Reiniciar um serviço | `docker compose -p twr restart twr` |
-| Atualizar toda a aplicação (deploy manual) | `git pull && docker compose -p twr --env-file /opt/twr/.env up -d --build twr orion-users && docker compose -p twr --env-file /opt/twr/.env up -d --force-recreate caddy` |
-| Parar tudo | `docker compose -p twr down` |
+| Ver logs | `docker compose -p bella logs -f [servico]` |
+| Reiniciar um serviço | `docker compose -p bella restart bella` |
+| Atualizar toda a aplicação (deploy manual) | `git pull && docker compose -p bella --env-file /opt/bella/.env up -d --build bella orion-users && docker compose -p bella --env-file /opt/bella/.env up -d --force-recreate caddy` |
+| Parar tudo | `docker compose -p bella down` |
 | Destruir a infra AWS | `cd infra/terraform && terraform destroy` |
 
 ## Exportar a tabela `message` para CSV
@@ -281,9 +281,9 @@ rodar o `psql` localmente.
 ```bash
 # 1. Dentro da sessão SSM (aws ssm start-session --target <instance_id> ...),
 #    descobrir o IP do container postgres:
-cd /opt/twr
+cd /opt/bella
 docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' \
-  $(docker compose -p twr ps -q postgres)
+  $(docker compose -p bella ps -q postgres)
 # ex: 172.20.0.3
 ```
 
@@ -298,8 +298,8 @@ aws ssm start-session \
 ```bash
 # 3. Ainda no seu computador, com psql instalado localmente (brew install libpq
 #    ou postgresql), exportar via localhost:5432. A senha é o POSTGRES_PASSWORD
-#    do /opt/twr/.env na instância:
-PGPASSWORD='<POSTGRES_PASSWORD>' psql -h localhost -p 5432 -U twr -d twr \
+#    do /opt/bella/.env na instância:
+PGPASSWORD='<POSTGRES_PASSWORD>' psql -h localhost -p 5432 -U bella -d bella \
   -c "\copy (SELECT * FROM message ORDER BY chat_id, sequence) TO 'message.csv' WITH CSV HEADER"
 ```
 
@@ -307,7 +307,7 @@ O arquivo `message.csv` é gravado diretamente na máquina local, sem precisar
 copiar/colar saída de terminal.
 
 Alternativa rápida (sem túnel, só pra espiar poucas linhas): dentro da
-sessão SSM, `docker compose -p twr exec -T postgres psql -U twr -d twr -c
+sessão SSM, `docker compose -p bella exec -T postgres psql -U bella -d bella -c
 "\copy (SELECT * FROM message ORDER BY chat_id, sequence) TO STDOUT WITH CSV
 HEADER" > /tmp/message.csv` e depois `cat /tmp/message.csv` para copiar a
 saída manualmente — só vale para volumes pequenos de dados.

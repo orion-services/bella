@@ -9,7 +9,7 @@
  */
 package dev.rpmhub.adapter.config;
 
-import dev.rpmhub.adapter.out.ai.TwrAgent;
+import dev.rpmhub.adapter.out.ai.BellaAgent;
 import dev.rpmhub.application.ChatService;
 import dev.rpmhub.application.ConversationService;
 import dev.rpmhub.application.IngestService;
@@ -55,7 +55,7 @@ public class ApplicationBeans {
 
     /** LangChain4j AI service that streams replies grounded in RAG-retrieved context. */
     @Inject
-    TwrAgent twrAgent;
+    BellaAgent bellaAgent;
 
     /** Number of context chunks retrieved per message. */
     @ConfigProperty(name = "rag.max-results", defaultValue = "3")
@@ -78,7 +78,7 @@ public class ApplicationBeans {
     @ApplicationScoped
     public ChatUseCase chatUseCase() {
         long inactivityThresholdMs = chatInactivityThresholdMinutes * 60_000L;
-        return new ChatService(chatRepository, embeddingRepository, twrAgent, ragMaxResults, ragMinScore,
+        return new ChatService(chatRepository, embeddingRepository, bellaAgent, ragMaxResults, ragMinScore,
                 inactivityThresholdMs);
     }
 
@@ -91,7 +91,7 @@ public class ApplicationBeans {
     @Produces
     @ApplicationScoped
     public ConversationUseCase conversationUseCase() {
-        return new ConversationService(chatRepository, embeddingRepository, twrAgent, ragMaxResults, ragMinScore);
+        return new ConversationService(chatRepository, embeddingRepository, bellaAgent, ragMaxResults, ragMinScore);
     }
 
     /**

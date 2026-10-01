@@ -36,7 +36,7 @@ npm run dev
 - **Node.js** 18+ and npm
 - Backend services running:
   - RAG API (default: `http://localhost:8081`)
-  - Orion Users Service (default: `http://localhost:8080`)
+  - Orion Users Service (default: `http://localhost:8082`)
 
 ## 🚀 Installation and Configuration
 
@@ -63,7 +63,7 @@ Minimum `.env` file content:
 VITE_API_BASE_URL=http://localhost:8081
 
 # Orion Users service URL (authentication)
-VITE_ORION_USERS_URL=http://localhost:8080
+VITE_ORION_USERS_URL=http://localhost:8082
 
 # Google Client ID for social authentication (required for Google login)
 VITE_GOOGLE_CLIENT_ID=your-google-client-id-here
@@ -166,7 +166,7 @@ cd ..
 | Variable | Description | Default | Required |
 |----------|-------------|---------|----------|
 | `VITE_API_BASE_URL` | RAG backend API base URL | `http://localhost:8081` | No |
-| `VITE_ORION_USERS_URL` | Orion Users service URL (authentication) | `http://localhost:8080` | No |
+| `VITE_ORION_USERS_URL` | Orion Users service URL (authentication) | `http://localhost:8082` | No |
 | `VITE_GOOGLE_CLIENT_ID` | Google Client ID for social authentication | - | Yes (for Google login) |
 
 ### Complete `.env` File Example
@@ -181,8 +181,8 @@ cd ..
 VITE_API_BASE_URL=http://localhost:8081
 
 # Orion Users service URL (authentication and user management)
-# Default: http://localhost:8080
-VITE_ORION_USERS_URL=http://localhost:8080
+# Default: http://localhost:8082
+VITE_ORION_USERS_URL=http://localhost:8082
 
 # ============================================
 # Social Authentication (Google)
