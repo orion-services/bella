@@ -11,22 +11,27 @@ package dev.rpmhub.adapter.out.rag;
 
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.embedding.onnx.allminilml6v2.AllMiniLmL6V2EmbeddingModel;
+import io.quarkus.arc.profile.IfBuildProfile;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
 
 /**
- * Produces the {@link EmbeddingModel} CDI bean used for RAG vector-similarity search
- * and document ingestion.
+ * Produces the local {@link EmbeddingModel} used for RAG in dev and test.
  *
- * <p>Uses the local, in-process all-MiniLM-L6-v2 ONNX model (384 dimensions), which
- * requires no external API and matches the {@code quarkus.langchain4j.pgvector.dimension}
- * already configured for this project. Unlike {@code quarkus-langchain4j-openai}, the
- * {@code langchain4j-embeddings-all-minilm-l6-v2} dependency is a plain library, not a
- * Quarkus extension, so the bean must be produced explicitly.
+ * <p>Uses the in-process all-MiniLM-L6-v2 ONNX model (384 dimensions), which
+ * requires no external API and matches {@code quarkus.langchain4j.pgvector.dimension}
+ * in {@code application.properties}. The library is not a Quarkus extension, so the
+ * bean has to be produced explicitly. While this bean exists, LangChain4j skips the
+ * OpenAI embedding provider.
+ *
+ * <p>Production ({@code QUARKUS_PROFILE=prod}) does not include this bean. That
+ * profile selects {@code text-embedding-3-small} (1536 dimensions) in
+ * {@code application-prod.properties}.
  *
  * @author Rodrigo Prestes Machado
  */
 @ApplicationScoped
+@IfBuildProfile(anyOf = { "dev", "test" })
 public class EmbeddingModelProducer {
 
     /**
