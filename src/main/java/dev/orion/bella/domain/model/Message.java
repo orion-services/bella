@@ -1,13 +1,19 @@
 /*
- * Copyright (c) 2026 Rodrigo Prestes Machado
- * All rights reserved.
+ * Copyright 2026 Rodrigo Prestes Machado
  *
- * This source code is proprietary and confidential.
- * Unauthorized copying, modification, distribution, or use
- * of this software, via any medium, is strictly prohibited
- * without the express prior written permission of the copyright holder.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-package dev.rpmhub.domain.model;
+package dev.orion.bella.domain.model;
 
 import java.util.Date;
 
@@ -94,7 +100,7 @@ public abstract class Message {
      * Returns the role discriminator for this message ({@code "USER"} or
      * {@code "AGENT"}), serialized as-is by Jackson so the frontend can tell
      * apart user and assistant messages when loading persisted conversation
-     * history (see {@code dev.rpmhub.adapter.in.rest.dto.MemoryResponse}).
+     * history (see {@code dev.orion.bella.adapter.in.rest.dto.MemoryResponse}).
      *
      * <p>Without this, every message in {@code GET /bella/memory} responses is
      * indistinguishable from the others once history is reloaded from

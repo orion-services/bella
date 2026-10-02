@@ -4,14 +4,18 @@ Bella supports programming classes. She is the virtual tutor for Construção de
 
 ## Purpose
 
-Students use Bella while they study. She helps them understand a concept, find an error, and practice. She does not hand over a finished solution for graded work.
+Bella is a study chatbot that helps students learn programming and find their way through the program. She helps them understand the material, not skip it, and she gives reliable answers about how the program works.
 
-The same conversation also answers questions about the program. Those answers come from official documents, so the student is not left guessing dates, workload, or rules.
+**Learning without shortcuts.** While studying, students can ask Bella to explain a concept, find the cause of an error, or suggest practice. For graded work, she guides the reasoning but never hands over a finished solution, so the learning stays with the student.
 
-Students talk to Bella on the website or on WhatsApp. A classifier reads each message and sends it to one assistant.
+**Answers they can trust.** In the same conversation, students can ask about dates, workload, and rules. These answers come only from official program documents, so students don't have to guess or rely on word of mouth.
 
-- Programming questions go to the tutor. The topics are JavaScript, the DOM, Vue, HTTP, Node, and exercises. She explains the idea. She does not complete an assignment for the student.
-- Questions about the program go to a document assistant. That covers the pedagogical project, the curriculum, the academic calendar, and the rules. The assistant answers only from official documents.
+## How it works
+
+Students talk to Bella on the website or on WhatsApp. A classifier reads each message and routes it to the right assistant:
+
+- **Tutor:** programming questions on JavaScript, the DOM, Vue, HTTP, Node, and exercises. She explains the idea and helps the student reason through it, but does not complete assignments.
+- **Document assistant:** questions about the pedagogical project, the curriculum, the academic calendar, and the rules. It answers only from official documents.
 
 ```mermaid
 flowchart LR

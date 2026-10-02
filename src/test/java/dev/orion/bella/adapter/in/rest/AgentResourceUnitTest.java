@@ -1,4 +1,4 @@
-package dev.rpmhub.adapter.in.rest;
+package dev.orion.bella.adapter.in.rest;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
@@ -12,7 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import dev.rpmhub.domain.port.in.ChatUseCase;
+import dev.orion.bella.domain.port.in.ChatUseCase;
 import io.smallrye.mutiny.Multi;
 
 /**

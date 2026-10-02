@@ -1,4 +1,4 @@
-package dev.rpmhub.application;
+package dev.orion.bella.application;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -14,16 +14,16 @@ import java.util.concurrent.ConcurrentMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import dev.rpmhub.adapter.out.ai.AdministrativeAgent;
-import dev.rpmhub.adapter.out.ai.TeacherAgent;
-import dev.rpmhub.domain.model.Chat;
-import dev.rpmhub.domain.model.Intention;
-import dev.rpmhub.domain.model.RagCorpus;
-import dev.rpmhub.domain.model.RagQuery;
-import dev.rpmhub.domain.model.RagResponse;
-import dev.rpmhub.domain.port.out.EmbeddingRepository;
-import dev.rpmhub.domain.port.out.QuestionRouter;
-import dev.rpmhub.domain.port.out.Repository;
+import dev.orion.bella.adapter.out.ai.AdministrativeAgent;
+import dev.orion.bella.adapter.out.ai.TeacherAgent;
+import dev.orion.bella.domain.model.Chat;
+import dev.orion.bella.domain.model.Intention;
+import dev.orion.bella.domain.model.RagCorpus;
+import dev.orion.bella.domain.model.RagQuery;
+import dev.orion.bella.domain.model.RagResponse;
+import dev.orion.bella.domain.port.out.EmbeddingRepository;
+import dev.orion.bella.domain.port.out.QuestionRouter;
+import dev.orion.bella.domain.port.out.Repository;
 import io.smallrye.mutiny.Multi;
 
 /**
@@ -136,7 +136,7 @@ class ChatServiceTest {
 
     /**
      * Ensures the agent reply is buffered and persisted as an
-     * {@link dev.rpmhub.domain.model.AgentMessage} once the stream completes.
+     * {@link dev.orion.bella.domain.model.AgentMessage} once the stream completes.
      */
     @Test
     void chat_persistsAgentReply_whenStreamCompletes() {
@@ -162,8 +162,8 @@ class ChatServiceTest {
         Chat chat = chatRepository.findLastByPhone("5511999999999").orElseThrow();
 
         assertEquals(2, chat.getMessages().size());
-        assertTrue(chat.getMessages().get(0) instanceof dev.rpmhub.domain.model.UserMessage);
-        assertTrue(chat.getMessages().get(1) instanceof dev.rpmhub.domain.model.AgentMessage);
+        assertTrue(chat.getMessages().get(0) instanceof dev.orion.bella.domain.model.UserMessage);
+        assertTrue(chat.getMessages().get(1) instanceof dev.orion.bella.domain.model.AgentMessage);
         assertEquals("oi", chat.getMessages().get(0).getMessage());
         assertEquals("resposta", chat.getMessages().get(1).getMessage());
     }

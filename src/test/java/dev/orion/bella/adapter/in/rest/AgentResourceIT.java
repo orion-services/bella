@@ -1,4 +1,4 @@
-package dev.rpmhub.adapter.in.rest;
+package dev.orion.bella.adapter.in.rest;
 
 import static io.restassured.RestAssured.given;
 

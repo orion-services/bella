@@ -1,10 +1,10 @@
-package dev.rpmhub.adapter.in.rest;
+package dev.orion.bella.adapter.in.rest;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.junit.jupiter.api.Test;
 
-import dev.rpmhub.domain.port.in.ChatUseCase;
+import dev.orion.bella.domain.port.in.ChatUseCase;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 

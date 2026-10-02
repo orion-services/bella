@@ -1,21 +1,27 @@
 /*
- * Copyright (c) 2026 Rodrigo Prestes Machado
- * All rights reserved.
+ * Copyright 2026 Rodrigo Prestes Machado
  *
- * This source code is proprietary and confidential.
- * Unauthorized copying, modification, distribution, or use
- * of this software, via any medium, is strictly prohibited
- * without the express prior written permission of the copyright holder.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-package dev.rpmhub.application;
+package dev.orion.bella.application;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import dev.rpmhub.domain.model.Document;
-import dev.rpmhub.domain.port.in.IngestDocumentsPort;
-import dev.rpmhub.domain.port.out.IngestPort;
-import dev.rpmhub.domain.port.out.WebScraperPort;
+import dev.orion.bella.domain.model.Document;
+import dev.orion.bella.domain.port.in.IngestDocumentsPort;
+import dev.orion.bella.domain.port.out.IngestPort;
+import dev.orion.bella.domain.port.out.WebScraperPort;
 import io.quarkus.logging.Log;
 
 /**
@@ -23,7 +29,7 @@ import io.quarkus.logging.Log;
  * repository.
  *
  * <p>Plain Java — instantiated by the Composition Root
- * ({@code dev.rpmhub.adapter.config.ApplicationBeans}).
+ * ({@code dev.orion.bella.adapter.config.ApplicationBeans}).
  *
  * @author Rodrigo Prestes Machado
  */

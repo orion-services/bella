@@ -1,24 +1,30 @@
 /*
- * Copyright (c) 2026 Rodrigo Prestes Machado
- * All rights reserved.
+ * Copyright 2026 Rodrigo Prestes Machado
  *
- * This source code is proprietary and confidential.
- * Unauthorized copying, modification, distribution, or use
- * of this software, via any medium, is strictly prohibited
- * without the express prior written permission of the copyright holder.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-package dev.rpmhub.adapter.in.rest;
+package dev.orion.bella.adapter.in.rest;
 
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import dev.rpmhub.adapter.in.rest.dto.ChatbotRequest;
-import dev.rpmhub.adapter.in.rest.dto.ConversationRequest;
-import dev.rpmhub.adapter.in.rest.dto.MemoryResponse;
-import dev.rpmhub.domain.model.Chat;
-import dev.rpmhub.domain.model.User;
-import dev.rpmhub.domain.port.in.ConversationUseCase;
-import dev.rpmhub.domain.port.out.AuthPort;
+import dev.orion.bella.adapter.in.rest.dto.ChatbotRequest;
+import dev.orion.bella.adapter.in.rest.dto.ConversationRequest;
+import dev.orion.bella.adapter.in.rest.dto.MemoryResponse;
+import dev.orion.bella.domain.model.Chat;
+import dev.orion.bella.domain.model.User;
+import dev.orion.bella.domain.port.in.ConversationUseCase;
+import dev.orion.bella.domain.port.out.AuthPort;
 import io.quarkus.logging.Log;
 import io.smallrye.common.annotation.Blocking;
 import io.smallrye.mutiny.Multi;

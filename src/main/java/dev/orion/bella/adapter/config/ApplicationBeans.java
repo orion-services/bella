@@ -1,29 +1,35 @@
 /*
- * Copyright (c) 2026 Rodrigo Prestes Machado
- * All rights reserved.
+ * Copyright 2026 Rodrigo Prestes Machado
  *
- * This source code is proprietary and confidential.
- * Unauthorized copying, modification, distribution, or use
- * of this software, via any medium, is strictly prohibited
- * without the express prior written permission of the copyright holder.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-package dev.rpmhub.adapter.config;
+package dev.orion.bella.adapter.config;
 
-import dev.rpmhub.adapter.out.ai.AdministrativeAgent;
-import dev.rpmhub.adapter.out.ai.TeacherAgent;
-import dev.rpmhub.application.AssistantRouter;
-import dev.rpmhub.application.ChatService;
-import dev.rpmhub.application.ConversationService;
-import dev.rpmhub.application.IngestService;
-import dev.rpmhub.domain.port.in.ChatUseCase;
-import dev.rpmhub.domain.port.in.ConversationUseCase;
-import dev.rpmhub.domain.port.in.IngestDocumentsPort;
-import dev.rpmhub.domain.port.in.RouterUseCase;
-import dev.rpmhub.domain.port.out.EmbeddingRepository;
-import dev.rpmhub.domain.port.out.IngestPort;
-import dev.rpmhub.domain.port.out.QuestionRouter;
-import dev.rpmhub.domain.port.out.Repository;
-import dev.rpmhub.domain.port.out.WebScraperPort;
+import dev.orion.bella.adapter.out.ai.AdministrativeAgent;
+import dev.orion.bella.adapter.out.ai.TeacherAgent;
+import dev.orion.bella.application.AssistantRouter;
+import dev.orion.bella.application.ChatService;
+import dev.orion.bella.application.ConversationService;
+import dev.orion.bella.application.IngestService;
+import dev.orion.bella.domain.port.in.ChatUseCase;
+import dev.orion.bella.domain.port.in.ConversationUseCase;
+import dev.orion.bella.domain.port.in.IngestDocumentsPort;
+import dev.orion.bella.domain.port.in.RouterUseCase;
+import dev.orion.bella.domain.port.out.EmbeddingRepository;
+import dev.orion.bella.domain.port.out.IngestPort;
+import dev.orion.bella.domain.port.out.QuestionRouter;
+import dev.orion.bella.domain.port.out.Repository;
+import dev.orion.bella.domain.port.out.WebScraperPort;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;

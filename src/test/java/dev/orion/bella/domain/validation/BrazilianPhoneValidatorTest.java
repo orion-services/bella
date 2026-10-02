@@ -1,4 +1,4 @@
-package dev.rpmhub.domain.validation;
+package dev.orion.bella.domain.validation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;

@@ -1,4 +1,4 @@
-package dev.rpmhub.adapter.config;
+package dev.orion.bella.adapter.config;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -14,16 +14,16 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import dev.rpmhub.adapter.out.ai.AdministrativeAgent;
-import dev.rpmhub.adapter.out.ai.TeacherAgent;
-import dev.rpmhub.application.ChatService;
-import dev.rpmhub.domain.model.Intention;
-import dev.rpmhub.domain.model.RagQuery;
-import dev.rpmhub.domain.model.RagResponse;
-import dev.rpmhub.domain.port.in.ChatUseCase;
-import dev.rpmhub.domain.port.out.EmbeddingRepository;
-import dev.rpmhub.domain.port.out.QuestionRouter;
-import dev.rpmhub.domain.port.out.Repository;
+import dev.orion.bella.adapter.out.ai.AdministrativeAgent;
+import dev.orion.bella.adapter.out.ai.TeacherAgent;
+import dev.orion.bella.application.ChatService;
+import dev.orion.bella.domain.model.Intention;
+import dev.orion.bella.domain.model.RagQuery;
+import dev.orion.bella.domain.model.RagResponse;
+import dev.orion.bella.domain.port.in.ChatUseCase;
+import dev.orion.bella.domain.port.out.EmbeddingRepository;
+import dev.orion.bella.domain.port.out.QuestionRouter;
+import dev.orion.bella.domain.port.out.Repository;
 import io.smallrye.mutiny.Multi;
 
 /**

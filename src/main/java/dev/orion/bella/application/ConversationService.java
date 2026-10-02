@@ -1,26 +1,32 @@
 /*
- * Copyright (c) 2026 Rodrigo Prestes Machado
- * All rights reserved.
+ * Copyright 2026 Rodrigo Prestes Machado
  *
- * This source code is proprietary and confidential.
- * Unauthorized copying, modification, distribution, or use
- * of this software, via any medium, is strictly prohibited
- * without the express prior written permission of the copyright holder.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-package dev.rpmhub.application;
+package dev.orion.bella.application;
 
 import java.util.Date;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
-import dev.rpmhub.domain.model.AgentMessage;
-import dev.rpmhub.domain.model.Chat;
-import dev.rpmhub.domain.model.User;
-import dev.rpmhub.domain.model.UserMessage;
-import dev.rpmhub.domain.port.in.ConversationUseCase;
-import dev.rpmhub.domain.port.in.RouterUseCase;
-import dev.rpmhub.domain.port.out.Repository;
+import dev.orion.bella.domain.model.AgentMessage;
+import dev.orion.bella.domain.model.Chat;
+import dev.orion.bella.domain.model.User;
+import dev.orion.bella.domain.model.UserMessage;
+import dev.orion.bella.domain.port.in.ConversationUseCase;
+import dev.orion.bella.domain.port.in.RouterUseCase;
+import dev.orion.bella.domain.port.out.Repository;
 import io.smallrye.mutiny.Multi;
 
 /**
@@ -30,7 +36,7 @@ import io.smallrye.mutiny.Multi;
  * conversation id.
  *
  * <p>Framework-agnostic (plain Java), wired by
- * {@code dev.rpmhub.adapter.config.ApplicationBeans}.
+ * {@code dev.orion.bella.adapter.config.ApplicationBeans}.
  *
  * @author Rodrigo Prestes Machado
  */
