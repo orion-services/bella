@@ -1,118 +1,119 @@
-# bella
+# Bella
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework, and requires **Java 25**.
+Bella supports programming classes. She is the virtual tutor for Construção de Páginas Web II, in the Sistemas para Internet program at IFRS, Porto Alegre campus.
 
-Production runs on a single EC2 instance in São Paulo (`sa-east-1`), provisioned with
-Terraform (`infra/terraform`). Every push to `main` is deployed automatically by a
-self-hosted GitHub Actions runner on that instance — see [docs/aws.md](docs/aws.md).
+## Purpose
 
-If you want to learn more about Quarkus, please visit its website: <https://quarkus.io/>.
+Students use Bella while they study. She helps them understand a concept, find an error, and practice. She does not hand over a finished solution for graded work.
 
-## Running the application in dev mode
+The same conversation also answers questions about the program. Those answers come from official documents, so the student is not left guessing dates, workload, or rules.
 
-You can run your application in dev mode that enables live coding using:
+Students talk to Bella on the website or on WhatsApp. A classifier reads each message and sends it to one assistant.
 
-```shell script
+- Programming questions go to the tutor. The topics are JavaScript, the DOM, Vue, HTTP, Node, and exercises. She explains the idea. She does not complete an assignment for the student.
+- Questions about the program go to a document assistant. That covers the pedagogical project, the curriculum, the academic calendar, and the rules. The assistant answers only from official documents.
+
+```mermaid
+flowchart LR
+  student[Student]
+  web[Website]
+  whatsapp[WhatsApp]
+  router[Classifier]
+  teacher[Programming tutor]
+  admin[Course assistant]
+  student --> web
+  student --> whatsapp
+  web --> router
+  whatsapp --> router
+  router --> teacher
+  router --> admin
+```
+
+The website is a Vue 3 app with Vuetify. Sign in uses [Orion Users](https://github.com/orion-services/users), with email and password, Google, and two factor authentication. The server is Quarkus.
+
+<p align="center">
+  <img src="docs/screenshots/login.png" width="220" alt="Sign in" />
+  <img src="docs/screenshots/conversations.png" width="220" alt="Conversations" />
+  <img src="docs/screenshots/chat.png" width="220" alt="Chat" />
+</p>
+
+## Documents
+
+Bella accepts three kinds of documents: plain text (for example Markdown), PDF files, and URLs. Text files and PDFs are read from the folder in `rag.location`. URLs are listed in `rag.scrape.urls` and converted to Markdown. On startup, Bella indexes all of them and stores the chunks in two separate corpora. Each message is searched in one corpus only. Programming questions use the discipline pages. Questions about the program use the institutional documents.
+
+Both lists live in [application.properties](src/main/resources/application.properties).
+
+### Program corpus
+
+The program corpus currently holds one local file, [ppc-sistemas-para-internet.md](src/main/resources/rag/ppc-sistemas-para-internet.md). It is the pedagogical project of the Sistemas para Internet technology program at IFRS, Porto Alegre campus, dated December 2025. The folder does not yet include an academic calendar or any other institutional document.
+
+### Discipline corpus
+
+The discipline corpus is scraped from [cpw2.rpmhub.dev](https://cpw2.rpmhub.dev) and stored as Markdown:
+
+- [Introdução](https://cpw2.rpmhub.dev/introducao/introducao.html)
+- [Variáveis](https://cpw2.rpmhub.dev/variaveis/variaveis.html)
+- [Tipos](https://cpw2.rpmhub.dev/tipos/tipos.html)
+- [Operadores](https://cpw2.rpmhub.dev/operadores/operadores.html)
+- [Estruturas de controle](https://cpw2.rpmhub.dev/controle/controle.html)
+- [Funções](https://cpw2.rpmhub.dev/funcoes/funcoes.html)
+- [DOM](https://cpw2.rpmhub.dev/dom/dom.html)
+- [AJAX](https://cpw2.rpmhub.dev/ajax/ajax.html)
+- [Simulados](https://cpw2.rpmhub.dev/exercicios/simulados.html)
+
+## Running locally
+
+You need Java 25, Docker, and an OpenAI API key. Docker starts Orion Users and the databases Bella uses in development.
+
+1. Clone this repository.
+2. Copy `.env.example` to `.env`. Set `POSTGRES_PASSWORD` and `OPENAI_API_KEY`. For local email confirmation, set `ORION_USERS_EMAIL_VALIDATION_URL` to `http://localhost:8082/users/validateEmail`.
+3. Copy `frontend/.env.example` to `frontend/.env`. The example already points Orion Users at `http://localhost:8082`.
+4. Start the application.
+
+```shell
 ./mvnw quarkus:dev
 ```
 
-Dev mode uses the same OpenAI models as production (`gpt-4o-mini` for chat and
-`text-embedding-3-small` for embeddings). Set `OPENAI_API_KEY` in the environment
-or in a `.env` file at the project root before starting. If a local Postgres
-already has an `embeddings` table created with the previous 384-dimension model,
-drop that table once so startup can recreate it at 1536 dimensions.
+The first start builds Orion Users and can take several minutes. Later starts reuse that image when `main` has not changed. Open <http://localhost:8080>. Quarkus builds the Vue app on startup and serves it. You do not need a separate `npm run dev` for normal use.
 
-> **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at <http://localhost:8080/q/dev/>.
+Development uses the same OpenAI models as production. Chat uses `gpt-4o-mini`. Embeddings use `text-embedding-3-small`. If a local Postgres database still has an embeddings table from the previous 384 dimension model, drop that table once. Startup can then recreate it at 1536 dimensions.
 
-### Frontend (Vue) + Orion Users (auth) in dev
+The Vue build runs once, when `./mvnw quarkus:dev` starts. If you edit anything under `frontend/src` while development mode is already running, stop it and start it again. Live reload watches `src/main/java` and `src/main/resources` only.
 
-The web UI (`frontend/`) authenticates against Orion Users (login/registration/2FA),
-an external service that is **not** part of this repo.
-`./mvnw quarkus:dev` starts it through Compose Dev Services
-(`compose-devservices.yml`): Docker clones
-[orion-services/users](https://github.com/orion-services/users) `main` and
-publishes it at <http://localhost:8082>. Bella's own Postgres and Redis still
-come from Quarkus Dev Services. The test profile does not start Orion Users
-and keeps Ollama as the chat model.
+If you want instant reload while you work on Vue components, run this in `frontend`:
 
-```shell script
-# 1. Requires a .env — see .env.example. Fill in POSTGRES_PASSWORD and Gmail
-#    SMTP credentials; use the local ORION_USERS_EMAIL_VALIDATION_URL shown there.
-cp .env.example .env
-
-# 2. Create frontend/.env once (see the warning below for why this matters)
-cd frontend && cp .env.example .env && cd ..   # VITE_ORION_USERS_URL already defaults to http://localhost:8082
-
-# 3. Run the Quarkus backend. The first start builds Orion Users and can take
-#    several minutes. Later starts reuse the image when main has not changed.
-./mvnw quarkus:dev
+```shell
+npm run dev
 ```
 
-`./mvnw quarkus:dev` already builds the Vue app (`frontend-maven-plugin` runs
-`npm install` + `npm run build` on startup) and embeds it into
-`src/main/resources/META-INF/resources/`, served by Quarkus itself on
-<http://localhost:8080>. **There is no need to run a separate `npm run dev` /
-Vite dev server** for normal usage.
+Vite then serves the interface at <http://localhost:5173> and proxies API calls to port 8080. That server is only a convenience for frontend work.
 
-The tradeoff: that build only happens once, when `quarkus:dev` starts. If you
-edit anything under `frontend/src/**` while `quarkus:dev` is already running,
-restart it (`Ctrl+C` then `./mvnw quarkus:dev` again) to rebuild and pick up
-the change — Quarkus's live-reload only watches `src/main/java` and
-`src/main/resources`, not `frontend/src`.
+The test profile does not start Orion Users. Tests keep a local Ollama model for chat.
 
-If you *do* want instant hot-reload while actively developing Vue components,
-you can optionally run a separate Vite dev server instead (`cd frontend && npm
-run dev`, served at `http://localhost:5173`, proxying API calls to `:8080`) —
-but that's a pure convenience for frontend-only iteration, not required.
+In development mode, the Quarkus Dev UI is at <http://localhost:8080/q/dev/>.
 
-If `frontend/.env` is missing, `VITE_ORION_USERS_URL` falls back to
-`http://localhost:8082` (the Orion Users port published by Docker Compose).
-Bella itself listens on `8080` and does not implement `/users/*`. Always create
-`frontend/.env` from `frontend/.env.example` before testing the web UI locally.
+### Package a jar
 
-## Packaging and running the application
-
-The application can be packaged using:
-
-```shell script
+```shell
 ./mvnw package
 ```
 
-It produces the `quarkus-run.jar` file in the `target/quarkus-app/` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `target/quarkus-app/lib/` directory.
+Run the result with `java -jar target/quarkus-app/quarkus-run.jar`. Dependencies are copied into `target/quarkus-app/lib/`. This is not an uber jar.
 
-The application is now runnable using `java -jar target/quarkus-app/quarkus-run.jar`.
+### Native executable
 
-If you want to build an _über-jar_, execute the following command:
+With GraalVM installed:
 
-```shell script
-./mvnw package -Dquarkus.package.jar.type=uber-jar
-```
-
-The application, packaged as an _über-jar_, is now runnable using `java -jar target/*-runner.jar`.
-
-## Creating a native executable
-
-You can create a native executable using:
-
-```shell script
+```shell
 ./mvnw package -Dnative
 ```
 
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using:
+Without GraalVM, build inside a container:
 
-```shell script
+```shell
 ./mvnw package -Dnative -Dquarkus.native.container-build=true
 ```
 
-You can then execute your native executable with: `./target/bella-1.0.0-runner`
+Run it with `./target/bella-1.0.0-runner`.
 
-If you want to learn more about building native executables, please consult <https://quarkus.io/guides/maven-tooling>.
-
-## Provided Code
-
-### REST
-
-Easily start your REST Web Services
-
-[Related guide section...](https://quarkus.io/guides/getting-started-reactive#reactive-jax-rs-resources)
+Production runs on a single EC2 instance in São Paulo (`sa-east-1`). See [docs/aws.md](docs/aws.md).
