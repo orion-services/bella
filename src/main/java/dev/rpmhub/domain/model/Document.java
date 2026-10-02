@@ -10,27 +10,40 @@
 package dev.rpmhub.domain.model;
 
 /**
- * Domain representation of a document to be ingested into the embedding store.
- * Replaces framework-specific types (e.g. LangChain4j Document) in domain ports.
+ * Document to be ingested into the embedding store.
  *
  * @author Rodrigo Prestes Machado
  */
-public class DocumentData {
+public class Document {
 
     /** Full textual content of the document to be embedded. */
     private final String text;
     /** Origin of the document, such as a file path or a URL. */
     private final String source;
+    /** Corpus this document belongs to, such as {@link RagCorpus#DISCIPLINE}. */
+    private final String corpus;
 
     /**
-     * Creates a DocumentData with the given text content and source reference.
+     * Creates a document in the discipline corpus.
      *
      * @param text   full textual content of the document
      * @param source origin of the document (file path, URL, etc.)
      */
-    public DocumentData(String text, String source) {
+    public Document(String text, String source) {
+        this(text, source, RagCorpus.DISCIPLINE);
+    }
+
+    /**
+     * Creates a document with an explicit corpus.
+     *
+     * @param text   full textual content of the document
+     * @param source origin of the document (file path, URL, etc.)
+     * @param corpus corpus name stored as chunk metadata
+     */
+    public Document(String text, String source, String corpus) {
         this.text = text;
         this.source = source;
+        this.corpus = corpus;
     }
 
     public String getText() {
@@ -39,5 +52,9 @@ public class DocumentData {
 
     public String getSource() {
         return source;
+    }
+
+    public String getCorpus() {
+        return corpus;
     }
 }

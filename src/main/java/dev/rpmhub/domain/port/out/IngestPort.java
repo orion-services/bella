@@ -9,7 +9,7 @@
  */
 package dev.rpmhub.domain.port.out;
 
-import dev.rpmhub.domain.model.DocumentData;
+import dev.rpmhub.domain.model.Document;
 
 import java.util.List;
 
@@ -32,5 +32,5 @@ public interface IngestPort {
      *
      * @param documents the list of documents to ingest
      */
-    void ingestDocuments(List<DocumentData> documents);
+    void ingestDocuments(List<Document> documents);
 }

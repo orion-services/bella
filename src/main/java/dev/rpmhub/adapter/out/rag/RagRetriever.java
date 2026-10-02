@@ -13,6 +13,7 @@ import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.store.embedding.EmbeddingSearchRequest;
 import dev.langchain4j.store.embedding.EmbeddingStore;
+import dev.langchain4j.store.embedding.filter.comparison.IsEqualTo;
 import dev.rpmhub.domain.model.RagQuery;
 import dev.rpmhub.domain.model.RagResponse;
 import dev.rpmhub.domain.port.out.EmbeddingRepository;
@@ -21,7 +22,7 @@ import jakarta.inject.Inject;
 
 /**
  * Implementation of the {@link EmbeddingRepository} port using LangChain4j, backed by the
- * pgvector-based {@link EmbeddingStore} and a local embedding model.
+ * pgvector-based {@link EmbeddingStore} and the configured embedding model.
  *
  * @author Rodrigo Prestes Machado
  */
@@ -52,11 +53,14 @@ public class RagRetriever implements EmbeddingRepository {
      */
     @Override
     public RagResponse searchChunks(RagQuery query) {
-        EmbeddingSearchRequest searchRequest = EmbeddingSearchRequest.builder()
+        EmbeddingSearchRequest.EmbeddingSearchRequestBuilder requestBuilder = EmbeddingSearchRequest.builder()
                 .queryEmbedding(embeddingModel.embed(query.getQuery()).content())
                 .minScore(query.getMinScore())
-                .maxResults(query.getMaxResults())
-                .build();
+                .maxResults(query.getMaxResults());
+        if (query.getCorpus() != null && !query.getCorpus().isBlank()) {
+            requestBuilder.filter(new IsEqualTo("corpus", query.getCorpus()));
+        }
+        EmbeddingSearchRequest searchRequest = requestBuilder.build();
 
         var matches = embeddingStore.search(searchRequest).matches();
         var contexts = matches.stream()

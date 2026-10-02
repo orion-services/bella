@@ -9,15 +9,19 @@
  */
 package dev.rpmhub.adapter.config;
 
-import dev.rpmhub.adapter.out.ai.BellaAgent;
+import dev.rpmhub.adapter.out.ai.AdministrativeAgent;
+import dev.rpmhub.adapter.out.ai.TeacherAgent;
+import dev.rpmhub.application.AssistantRouter;
 import dev.rpmhub.application.ChatService;
 import dev.rpmhub.application.ConversationService;
 import dev.rpmhub.application.IngestService;
 import dev.rpmhub.domain.port.in.ChatUseCase;
 import dev.rpmhub.domain.port.in.ConversationUseCase;
 import dev.rpmhub.domain.port.in.IngestDocumentsPort;
+import dev.rpmhub.domain.port.in.RouterUseCase;
 import dev.rpmhub.domain.port.out.EmbeddingRepository;
 import dev.rpmhub.domain.port.out.IngestPort;
+import dev.rpmhub.domain.port.out.QuestionRouter;
 import dev.rpmhub.domain.port.out.Repository;
 import dev.rpmhub.domain.port.out.WebScraperPort;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -53,9 +57,17 @@ public class ApplicationBeans {
     @Inject
     WebScraperPort webScraperPort;
 
-    /** LangChain4j AI service that streams replies grounded in RAG-retrieved context. */
+    /** LangChain4j AI service that streams programming replies grounded in RAG context. */
     @Inject
-    BellaAgent bellaAgent;
+    TeacherAgent teacherAgent;
+
+    /** LangChain4j AI service that streams administrative course replies. */
+    @Inject
+    AdministrativeAgent administrativeAgent;
+
+    /** Classifies a message as programming or administrative before retrieval. */
+    @Inject
+    QuestionRouter questionRouter;
 
     /** Number of context chunks retrieved per message. */
     @ConfigProperty(name = "rag.max-results", defaultValue = "3")
@@ -78,8 +90,7 @@ public class ApplicationBeans {
     @ApplicationScoped
     public ChatUseCase chatUseCase() {
         long inactivityThresholdMs = chatInactivityThresholdMinutes * 60_000L;
-        return new ChatService(chatRepository, embeddingRepository, bellaAgent, ragMaxResults, ragMinScore,
-                inactivityThresholdMs);
+        return new ChatService(chatRepository, routerUseCase(), inactivityThresholdMs);
     }
 
     /**
@@ -91,7 +102,12 @@ public class ApplicationBeans {
     @Produces
     @ApplicationScoped
     public ConversationUseCase conversationUseCase() {
-        return new ConversationService(chatRepository, embeddingRepository, bellaAgent, ragMaxResults, ragMinScore);
+        return new ConversationService(chatRepository, routerUseCase());
+    }
+
+    private RouterUseCase routerUseCase() {
+        return new AssistantRouter(embeddingRepository, teacherAgent, administrativeAgent, questionRouter,
+                ragMaxResults, ragMinScore);
     }
 
     /**

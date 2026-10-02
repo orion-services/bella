@@ -16,7 +16,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
 
 /**
- * Produces the local {@link EmbeddingModel} used for RAG in dev and test.
+ * Produces the local {@link EmbeddingModel} used for RAG in the test profile.
  *
  * <p>Uses the in-process all-MiniLM-L6-v2 ONNX model (384 dimensions), which
  * requires no external API and matches {@code quarkus.langchain4j.pgvector.dimension}
@@ -24,14 +24,14 @@ import jakarta.enterprise.inject.Produces;
  * bean has to be produced explicitly. While this bean exists, LangChain4j skips the
  * OpenAI embedding provider.
  *
- * <p>Production ({@code QUARKUS_PROFILE=prod}) does not include this bean. That
- * profile selects {@code text-embedding-3-small} (1536 dimensions) in
- * {@code application-prod.properties}.
+ * <p>Dev and production do not include this bean. Those profiles select
+ * {@code text-embedding-3-small} (1536 dimensions) via {@code OPENAI_API_KEY}
+ * in {@code application-dev.properties} and {@code application-prod.properties}.
  *
  * @author Rodrigo Prestes Machado
  */
 @ApplicationScoped
-@IfBuildProfile(anyOf = { "dev", "test" })
+@IfBuildProfile("test")
 public class EmbeddingModelProducer {
 
     /**
