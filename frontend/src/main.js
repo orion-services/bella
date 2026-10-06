@@ -1,8 +1,7 @@
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 import { createVuetify } from 'vuetify';
-import { pt } from 'vuetify/locale';
-import { createRouter, createWebHistory } from 'vue-router';
+import { en, pt } from 'vuetify/locale';
 import 'vuetify/styles';
 import '@mdi/font/css/materialdesignicons.css';
 import './style.css';
@@ -10,6 +9,8 @@ import './style.css';
 import App from './App.vue';
 import { useAuthStore } from './stores/auth';
 import router from './router';
+import { i18n } from './i18n';
+import { htmlLang } from './i18n/locale';
 
 function initialTheme() {
   const saved = localStorage.getItem('bella-theme');
@@ -29,12 +30,15 @@ const brandColors = {
   'on-secondary': '#FFFFFF'
 };
 
-// Configurar Vuetify. O html é pt-BR; o locale do Vuetify alinha rótulos internos (limpar, fechar).
+const locale = i18n.global.locale;
+document.documentElement.lang = htmlLang(locale);
+
+// O locale do Vuetify alinha rótulos internos (limpar, fechar) ao idioma do navegador.
 const vuetify = createVuetify({
   locale: {
-    locale: 'pt',
+    locale,
     fallback: 'en',
-    messages: { pt }
+    messages: { pt, en }
   },
   theme: {
     defaultTheme: initialTheme(),
@@ -93,6 +97,7 @@ router.beforeEach((to, from, next) => {
 const app = createApp(App);
 app.use(pinia);
 app.use(router);
+app.use(i18n);
 app.use(vuetify);
 
 app.mount('#app');

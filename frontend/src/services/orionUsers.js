@@ -22,20 +22,19 @@ export function extractOrionErrorMessage(error) {
   return data.message || data.title || null;
 }
 
-/** Shown when password login succeeds but the account email is still unconfirmed. */
-export const EMAIL_NOT_VALIDATED_MESSAGE =
-  'Please validate your email before signing in. Check your inbox for the confirmation link.';
+/** i18n key shown when password login succeeds but the account email is still unconfirmed. */
+export const EMAIL_NOT_VALIDATED_KEY = 'auth.emailNotValidated';
 
 /**
  * Password login is refused until the account email is confirmed.
  * Google sign-in is left alone: the provider has already verified the address.
  *
  * @param {object | null | undefined} user user payload from Orion Users
- * @returns {string | null} the message to show, or null when login may proceed
+ * @returns {string | null} an i18n key to show, or null when login may proceed
  */
 export function unvalidatedEmailMessage(user) {
   if (user && user.emailValid === false) {
-    return EMAIL_NOT_VALIDATED_MESSAGE;
+    return EMAIL_NOT_VALIDATED_KEY;
   }
   return null;
 }
@@ -131,6 +130,15 @@ export const orionUsersService = {
     
     const response = await orionUsersApi.post('/users/google/2FAuth/validate', formData);
     return response.data;
+  },
+
+  // Recuperar senha: o serviço gera uma senha nova e envia por e-mail (HTTP 204).
+  async recoverPassword(email) {
+    const formData = new URLSearchParams();
+    formData.append('email', email);
+
+    const response = await orionUsersApi.post('/users/recoverPassword', formData);
+    return response.status;
   },
 
   // Atualizar configurações 2FA

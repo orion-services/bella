@@ -4,7 +4,7 @@
       <v-col cols="12">
         <v-card>
           <v-card-title class="d-flex align-center">
-            <span>My Conversations</span>
+            <span>{{ $t('conversations.title') }}</span>
             <v-spacer></v-spacer>
             <v-btn 
               type="button"
@@ -14,13 +14,13 @@
               :disabled="creatingConversation"
             >
               <v-icon left>mdi-plus</v-icon>
-              New Conversation
+              {{ $t('conversations.new') }}
             </v-btn>
           </v-card-title>
           <v-card-text>
             <v-text-field
               v-model="search"
-              label="Search conversations"
+              :label="$t('conversations.search')"
               prepend-inner-icon="mdi-magnify"
               clearable
               class="mb-4"
@@ -38,11 +38,11 @@
             </v-list>
 
             <v-alert v-else-if="!loading" type="info">
-              You don't have any conversations yet. Create a new conversation to get started!
+              {{ $t('conversations.empty') }}
             </v-alert>
 
             <div v-if="loading" class="text-center mt-4">
-              <v-progress-circular indeterminate color="primary" aria-label="Carregando conversas" role="status"></v-progress-circular>
+              <v-progress-circular indeterminate color="primary" :aria-label="$t('conversations.loading')" role="status"></v-progress-circular>
             </div>
           </v-card-text>
         </v-card>
@@ -61,7 +61,7 @@
               v-bind="attrs"
               @click="showError = false"
             >
-              Close
+              {{ $t('conversations.close') }}
             </v-btn>
           </template>
         </v-snackbar>
@@ -143,19 +143,19 @@ export default {
       try {
         console.log('Creating new conversation for user:', user.id);
         // Create conversation in database before navigating
-        const conversation = await apiService.createConversation(user.id, 'New Conversation');
+        const conversation = await apiService.createConversation(user.id, this.$t('conversations.new'));
         console.log('Conversation created successfully:', conversation);
         console.log('Response type:', typeof conversation);
         console.log('Conversation ID:', conversation?.id);
         
         // Validate response
         if (!conversation) {
-          throw new Error('Empty response from server');
+          throw new Error(this.$t('conversations.emptyResponse'));
         }
         
         if (!conversation.id) {
           console.error('Response without ID:', conversation);
-          throw new Error('Invalid server response: conversation created without ID');
+          throw new Error(this.$t('conversations.missingId'));
         }
         
         // Navigate to chat screen with the created conversation ID
@@ -166,7 +166,7 @@ export default {
       } catch (error) {
         console.error('Error creating new conversation:', error);
         console.error('Stack trace:', error.stack);
-        const errorMsg = error.message || error.response?.data?.message || 'Error creating conversation. Please try again.';
+        const errorMsg = error.message || error.response?.data?.message || this.$t('conversations.createError');
         this.errorMessage = errorMsg;
         this.showError = true;
         // Do not navigate on error - leave user on conversations page

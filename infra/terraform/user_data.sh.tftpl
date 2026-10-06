@@ -122,8 +122,8 @@ ln -sfn /usr/libexec/docker/cli-plugins/docker-buildx /home/ec2-user/.docker/cli
 chown -R ec2-user:ec2-user /home/ec2-user/.docker
 
 # ------------------------------------------------------------------
-# Extra EBS data volume -> /data (Postgres/Redis/Ollama persistent data +
-# Docker's data-root, so it's independent from the smaller root volume).
+# Extra EBS data volume -> /data (Postgres, Redis and Docker's data-root,
+# so it's independent from the smaller root volume).
 # ------------------------------------------------------------------
 DATA_DEVICE=""
 for candidate in /dev/nvme1n1 /dev/xvdf /dev/sdf; do

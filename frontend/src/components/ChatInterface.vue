@@ -15,14 +15,14 @@
               @click="initializeChat"
               class="ml-2"
             >
-              Try Again
+              {{ $t('chat.tryAgain') }}
             </v-btn>
           </div>
         </v-alert>
       </div>
       <div v-if="initializing" class="text-center mt-4">
         <v-progress-circular indeterminate color="primary" aria-hidden="true"></v-progress-circular>
-        <div class="mt-2 text-body-2">Initializing conversation...</div>
+        <div class="mt-2 text-body-2">{{ $t('chat.initializing') }}</div>
       </div>
       <div v-else ref="messagesContent">
         <div 
@@ -60,7 +60,7 @@
     <div class="input-container">
       <v-text-field
         v-model="prompt"
-        label="Type your message..."
+        :label="$t('chat.messageLabel')"
         outlined
         dense
         hide-details
@@ -71,7 +71,7 @@
       <v-btn
         color="primary"
         icon
-        aria-label="Enviar mensagem"
+        :aria-label="$t('chat.send')"
         @click="sendMessage"
         :disabled="!prompt.trim() || isLoading || initializing || !conversationId"
         :loading="isLoading"
@@ -186,7 +186,7 @@ export default {
         
         if (!this.userId) {
           console.error('User without valid identifier:', user);
-          this.error = 'Error: user without valid identifier. Please log in again.';
+          this.error = this.$t('chat.missingUser');
           this.initializing = false;
           setTimeout(() => {
             this.$router.push('/login');
@@ -212,7 +212,7 @@ export default {
           // If no conversationId, create new conversation
           console.log('Creating new conversation for user:', this.userId);
           try {
-            const conversation = await apiService.createConversation(this.userId, 'New Conversation');
+            const conversation = await apiService.createConversation(this.userId, this.$t('conversations.new'));
             console.log('Conversation created:', conversation);
             
             if (conversation && conversation.id) {
@@ -220,11 +220,11 @@ export default {
               // Usar replace para não adicionar ao histórico de navegação
               await this.$router.replace(`/chat/${this.conversationId}`);
             } else {
-              throw new Error('Invalid response when creating conversation: no ID');
+              throw new Error(this.$t('chat.missingId'));
             }
           } catch (error) {
             console.error('Error creating conversation:', error);
-            const errorMessage = error.message || error.response?.data?.message || 'Error creating conversation. Please try again.';
+            const errorMessage = error.message || error.response?.data?.message || this.$t('chat.createError');
             this.error = errorMessage;
             this.initializing = false;
             // Redirect after showing error
@@ -237,7 +237,7 @@ export default {
 
       } catch (error) {
         console.error('Error initializing chat:', error);
-        this.error = error.message || 'Error initializing chat. Please reload the page.';
+        this.error = error.message || this.$t('chat.initError');
       } finally {
         this.initializing = false;
         this.$nextTick(() => {
@@ -377,7 +377,7 @@ export default {
     async sendMessage() {
       if (!this.prompt.trim() || this.isLoading || !this.conversationId) {
         if (!this.conversationId) {
-          this.error = 'Conversation not initialized. Please reload the page.';
+          this.error = this.$t('chat.notInitialized');
         }
         return;
       }
@@ -439,9 +439,9 @@ export default {
           (error) => {
             console.error('Stream error:', error);
             if (this.messages[botMessageIndex]) {
-              this.messages[botMessageIndex].content = 'Error processing message. Please try again.';
+              this.messages[botMessageIndex].content = this.$t('chat.processError');
             }
-            this.error = error.message || 'Error processing message. Check your connection and try again.';
+            this.error = error.message || this.$t('chat.processConnection');
             this.isLoading = false;
           },
           () => {
@@ -460,9 +460,9 @@ export default {
       } catch (error) {
         console.error('Error sending message:', error);
         if (this.messages[botMessageIndex]) {
-          this.messages[botMessageIndex].content = 'Error sending message. Please try again.';
+          this.messages[botMessageIndex].content = this.$t('chat.sendError');
         }
-        this.error = error.response?.data?.message || error.message || 'Error sending message. Check your connection and try again.';
+        this.error = error.response?.data?.message || error.message || this.$t('chat.sendConnection');
         this.isLoading = false;
       }
     }
