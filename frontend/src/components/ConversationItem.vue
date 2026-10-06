@@ -9,7 +9,7 @@
       hide-details
       single-line
       autofocus
-      aria-label="Título da conversa"
+      :aria-label="$t('conversations.titleLabel')"
       :disabled="renaming"
       @click.stop
       @keydown.enter.prevent="submitRename"
@@ -18,9 +18,9 @@
     />
     <v-list-item-title v-else>{{ conversation.title }}</v-list-item-title>
     <v-list-item-subtitle>
-      Created at: {{ formatDate(conversation.startedAt) }}
+      {{ $t('conversations.createdAt') }}: {{ formatDate(conversation.startedAt) }}
       <span v-if="conversation.lastActivity">
-        | Last activity: {{ formatDate(conversation.lastActivity) }}
+        | {{ $t('conversations.lastActivity') }}: {{ formatDate(conversation.lastActivity) }}
       </span>
     </v-list-item-subtitle>
 
@@ -29,7 +29,7 @@
         <v-btn
           icon
           variant="text"
-          :aria-label="editing ? 'Salvar título' : 'Renomear conversa'"
+          :aria-label="editing ? $t('conversations.saveTitle') : $t('conversations.rename')"
           :loading="renaming"
           @mousedown.prevent
           @click="editing ? submitRename() : openRename()"
@@ -39,7 +39,7 @@
         <v-btn
           icon
           variant="text"
-          aria-label="Excluir conversa"
+          :aria-label="$t('conversations.delete')"
           @click="confirmDelete"
         >
           <v-icon>mdi-delete</v-icon>
@@ -52,6 +52,7 @@
 
 <script>
 import { apiService } from '../services/api';
+import { dateLocale } from '../i18n/locale';
 
 export default {
   name: 'ConversationItem',
@@ -74,7 +75,7 @@ export default {
       if (!dateString) return '';
       const date = new Date(dateString);
       if (Number.isNaN(date.getTime())) return '';
-      return date.toLocaleDateString('en-US', {
+      return date.toLocaleDateString(dateLocale(this.$i18n.locale), {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
@@ -112,14 +113,14 @@ export default {
         this.$emit('renamed');
       } catch (e) {
         console.error('Error renaming conversation:', e);
-        alert(e.response?.data?.message || e.message || 'Could not rename conversation');
+        alert(e.response?.data?.message || e.message || this.$t('conversations.renameError'));
       } finally {
         this.renaming = false;
       }
     },
 
     confirmDelete() {
-      if (confirm('Are you sure you want to delete this conversation?')) {
+      if (confirm(this.$t('conversations.deleteConfirm'))) {
         this.$emit('delete', this.conversation.id);
       }
     }

@@ -1,4 +1,9 @@
 import axios from 'axios';
+import { i18n } from '../i18n';
+
+function t(key, params) {
+  return i18n.global.t(key, params);
+}
 
 // Backend API Service (Bella)
 // VITE_API_BASE_URL vazio (string '') significa "mesma origem" (produção: frontend
@@ -62,14 +67,14 @@ export const apiService = {
     try {
       const response = await api.post(`/bella/users/${userId}/conversations`, { title });
       if (!response.data || !response.data.id) {
-        throw new Error('Resposta inválida do servidor: conversa criada sem ID');
+        throw new Error(t('api.invalidConversationResponse'));
       }
       return response.data;
     } catch (error) {
       console.error('Erro ao criar conversa:', error);
       // Re-throw com mensagem mais amigável
       if (error.response) {
-        const message = error.response.data?.message || error.response.data?.error || 'Erro ao criar conversa';
+        const message = error.response.data?.message || error.response.data?.error || t('api.createConversationFailed');
         throw new Error(message);
       }
       throw error;
@@ -115,7 +120,7 @@ export const apiService = {
   async createChatbotStream(conversationId, prompt, onMessage, onError, onComplete) {
     const token = localStorage.getItem('jwt_token');
     if (!token) {
-      onError(new Error('Token de autenticação não encontrado'));
+      onError(new Error(t('api.authTokenMissing')));
       return;
     }
 
@@ -136,12 +141,12 @@ export const apiService = {
         })
       });
     } catch (error) {
-      onError(new Error(`Erro de conexão: ${error.message}`));
+      onError(new Error(t('api.connectionError', { message: error.message })));
       return;
     }
 
     if (!response.ok) {
-      let errorMessage = `Erro HTTP ${response.status}`;
+      let errorMessage = t('api.httpError', { status: response.status });
       try {
         const errorData = await response.json();
         errorMessage = errorData.message || errorMessage;
@@ -157,7 +162,7 @@ export const apiService = {
     }
 
     if (!response.body) {
-      onError(new Error('Resposta sem corpo'));
+      onError(new Error(t('api.emptyResponse')));
       return;
     }
 

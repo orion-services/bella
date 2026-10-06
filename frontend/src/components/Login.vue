@@ -4,14 +4,14 @@
       <v-col cols="12" sm="8" md="6" lg="4">
         <v-card>
           <v-card-title class="text-h5 text-center pa-4">
-            Login
+            {{ $t('auth.loginTitle') }}
           </v-card-title>
           <v-card-text>
             <v-form ref="form" v-model="valid" lazy-validation @submit.prevent="login">
               <v-text-field
                 v-model="email"
                 :rules="emailRules"
-                label="Email"
+                :label="$t('auth.email')"
                 required
                 prepend-inner-icon="mdi-email"
                 type="email"
@@ -20,12 +20,12 @@
               <v-text-field
                 v-model="password"
                 :rules="passwordRules"
-                label="Password"
+                :label="$t('auth.password')"
                 required
                 prepend-inner-icon="mdi-lock"
                 :type="showPassword ? 'text' : 'password'"
                 @keydown.enter.prevent="login"
-                hint="Password must be at least 8 characters, including an uppercase letter, a number and a special character"
+                :hint="$t('auth.passwordHintLogin')"
                 persistent-hint
               >
                 <template #append-inner>
@@ -33,7 +33,7 @@
                     icon
                     variant="text"
                     size="small"
-                    :aria-label="showPassword ? 'Ocultar senha' : 'Mostrar senha'"
+                    :aria-label="showPassword ? $t('auth.hidePassword') : $t('auth.showPassword')"
                     @click="showPassword = !showPassword"
                   >
                     <v-icon aria-hidden="true">{{ showPassword ? 'mdi-eye' : 'mdi-eye-off' }}</v-icon>
@@ -53,11 +53,11 @@
                 block
                 class="mt-4"
               >
-                Sign In
+                {{ $t('auth.signIn') }}
               </v-btn>
 
               <template v-if="isGoogleEnabled">
-                <v-divider class="my-4">OU</v-divider>
+                <v-divider class="my-4">{{ $t('auth.or') }}</v-divider>
 
                 <v-btn
                   :disabled="loading || loadingGoogle"
@@ -68,20 +68,23 @@
                   @click="loginWithGoogle"
                 >
                   <v-icon left>mdi-google</v-icon>
-                  Sign in with Google
+                  {{ $t('auth.signInWithGoogle') }}
                 </v-btn>
                 
                 <!-- Debug message (remove in production) -->
                 <v-alert v-if="!googleInitialized && isGoogleEnabled" type="info" density="compact" class="mt-2" variant="tonal">
-                  <small>Initializing Google Sign In... {{ googleScriptLoaded ? 'Script loaded' : 'Waiting for script...' }}</small>
+                  <small>{{ $t('auth.googleInitializing', { status: googleScriptLoaded ? $t('auth.googleScriptLoaded') : $t('auth.googleWaitingScript') }) }}</small>
                 </v-alert>
               </template>
             </v-form>
           </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
+            <v-btn text to="/recover-password">
+              {{ $t('auth.forgotPassword') }}
+            </v-btn>
             <v-btn text to="/register">
-              Don't have an account? Sign up
+              {{ $t('auth.noAccount') }}
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -132,21 +135,25 @@ export default {
       requires2FA: false,
       googleClientId: trimmedClientId,
       googleScriptLoaded: false,
-      googleInitialized: false,
-      emailRules: [
-        v => !!v || 'Email is required',
-        v => /.+@.+\..+/.test(v) || 'Email must be valid'
-      ],
-      passwordRules: [
-        v => !!v || 'Password is required',
-        v => !v || (v && v.length >= 8) || 'Password must be at least 8 characters',
-        v => !v || (v && /[A-Z]/.test(v)) || 'Password must contain at least one uppercase letter',
-        v => !v || (v && /[0-9]/.test(v)) || 'Password must contain at least one number',
-        v => !v || (v && /[^A-Za-z0-9]/.test(v)) || 'Password must contain at least one special character'
-      ]
+      googleInitialized: false
     };
   },
   computed: {
+    emailRules() {
+      return [
+        v => !!v || this.$t('validation.emailRequired'),
+        v => /.+@.+\..+/.test(v) || this.$t('validation.emailInvalid')
+      ];
+    },
+    passwordRules() {
+      return [
+        v => !!v || this.$t('validation.passwordRequired'),
+        v => !v || (v && v.length >= 8) || this.$t('validation.passwordMin'),
+        v => !v || (v && /[A-Z]/.test(v)) || this.$t('validation.passwordUpper'),
+        v => !v || (v && /[0-9]/.test(v)) || this.$t('validation.passwordNumber'),
+        v => !v || (v && /[^A-Za-z0-9]/.test(v)) || this.$t('validation.passwordSpecial')
+      ];
+    },
     isGoogleEnabled() {
       const enabled = !!this.googleClientId && this.googleClientId.length > 0;
       console.log('🔍 isGoogleEnabled:', enabled, '| googleClientId:', this.googleClientId ? `"${this.googleClientId.substring(0, 20)}..."` : '(vazio)');
@@ -189,7 +196,7 @@ export default {
 
           const emailValidationError = unvalidatedEmailMessage(user);
           if (emailValidationError) {
-            this.error = emailValidationError;
+            this.error = this.$t(emailValidationError);
             return;
           }
           
@@ -221,11 +228,11 @@ export default {
           // Redirect to conversations
           this.$router.push('/conversations');
         } else {
-          this.error = 'Error signing in. Please try again.';
+          this.error = this.$t('auth.signInError');
         }
       } catch (error) {
         console.error('Error signing in:', error);
-        this.error = extractOrionErrorMessage(error) || 'Error signing in. Please check your credentials.';
+        this.error = extractOrionErrorMessage(error) || this.$t('auth.signInCredentialsError');
       } finally {
         this.loading = false;
       }
@@ -235,7 +242,7 @@ export default {
       const emailValidationError = unvalidatedEmailMessage(user);
       if (emailValidationError) {
         this.requires2FA = false;
-        this.error = emailValidationError;
+        this.error = this.$t(emailValidationError);
         return;
       }
 
@@ -290,7 +297,7 @@ export default {
         } else if (attempts >= maxAttempts) {
           clearInterval(checkInterval);
           console.error('Google Identity Services did not load after 10 seconds');
-          this.error = 'Error loading Google Identity Services. Check your connection.';
+          this.error = this.$t('auth.googleLoadError');
         }
       }, 200);
     },
@@ -317,13 +324,13 @@ export default {
         console.log('Google Sign In initialized successfully');
       } catch (error) {
         console.error('Error initializing Google Sign In:', error);
-        this.error = 'Error initializing Google authentication. Please reload the page.';
+        this.error = this.$t('auth.googleInitError');
       }
     },
 
     async loginWithGoogle() {
       if (!this.isGoogleEnabled) {
-        this.error = 'Google Client ID not configured. Check the .env file and restart the server.';
+        this.error = this.$t('auth.googleClientMissing');
         return;
       }
 
@@ -332,7 +339,7 @@ export default {
         console.log('Google Sign In not initialized. Attempting to initialize...');
         if (typeof window.google === 'undefined' || !window.google.accounts) {
           // Script has not loaded yet, wait
-          this.error = 'Waiting for Google Identity Services to load...';
+          this.error = this.$t('auth.googleWaiting');
           this.waitForGoogleScript();
           // Try again after a delay
           setTimeout(() => {
@@ -353,7 +360,7 @@ export default {
       }
 
       if (!this.googleScriptLoaded || typeof window.google === 'undefined' || !window.google.accounts) {
-        this.error = 'Google Identity Services not loaded. Wait a few seconds and try again.';
+        this.error = this.$t('auth.googleNotLoaded');
         // Tentar recarregar
         this.waitForGoogleScript();
         return;
@@ -409,7 +416,7 @@ export default {
         // when the user clicks the button and authenticates
       } catch (error) {
         console.error('Error rendering Google button:', error);
-        this.error = 'Error initializing Google authentication. Please try again.';
+        this.error = this.$t('auth.googleButtonError');
         this.loadingGoogle = false;
         if (buttonContainer.parentNode) {
           buttonContainer.parentNode.removeChild(buttonContainer);
@@ -427,7 +434,7 @@ export default {
       if (response.credential) {
         await this.processGoogleLogin(response.credential);
       } else if (response.error) {
-        this.error = 'Google authentication error: ' + response.error;
+        this.error = this.$t('auth.googleAuthError', { error: response.error });
         this.loadingGoogle = false;
       }
     },
@@ -481,11 +488,11 @@ export default {
           // Redirect to conversations
           this.$router.push('/conversations');
         } else {
-          this.error = 'Error signing in with Google. Please try again.';
+          this.error = this.$t('auth.googleSignInError');
         }
       } catch (error) {
         console.error('Error signing in with Google:', error);
-        this.error = extractOrionErrorMessage(error) || 'Error signing in with Google. Please try again.';
+        this.error = extractOrionErrorMessage(error) || this.$t('auth.googleSignInError');
       } finally {
         this.loadingGoogle = false;
       }
