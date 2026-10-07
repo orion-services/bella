@@ -4,7 +4,7 @@
       <v-app-bar-title>
         <span class="app-bar-brand">
           <img :src="appIcon" alt="" class="app-bar-logo" />
-          <span>Bella</span>
+          <span>Orion Bella</span>
         </span>
       </v-app-bar-title>
       <v-spacer></v-spacer>
