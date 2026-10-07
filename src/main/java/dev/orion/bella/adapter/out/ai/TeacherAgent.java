@@ -19,6 +19,7 @@ import dev.langchain4j.service.MemoryId;
 import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
 import io.quarkiverse.langchain4j.RegisterAiService;
+import io.quarkiverse.langchain4j.skills.Skills;
 import io.smallrye.mutiny.Multi;
 import jakarta.enterprise.context.ApplicationScoped;
 
@@ -26,10 +27,15 @@ import jakarta.enterprise.context.ApplicationScoped;
  * LangChain4j AI service for the teacher agent: Bella's programming tutor for the
  * Construção de Páginas Web II course.
  *
+ * <p>{@code toolProviderSupplier} is set so streaming tool calls, including
+ * {@code activate_skill}, run on a worker thread. The Redis chat memory blocks, and
+ * that call cannot happen on the Vert.x event loop.
+ *
  * @author Rodrigo Prestes Machado
  */
-@RegisterAiService
+@RegisterAiService(toolProviderSupplier = RegisterAiService.BeanIfExistsToolProviderSupplier.class)
 @ApplicationScoped
+@Skills("chiu")
 public interface TeacherAgent {
 
     /**
