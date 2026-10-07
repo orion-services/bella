@@ -13,23 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.orion.bella.domain.port.in;
+package dev.orion.bella.domain.model;
 
 /**
- * Driving port that answers a student message by choosing the teacher or the
- * administrative agent and grounding the reply in the matching RAG corpus.
+ * Which assistant produced an {@link AgentMessage}.
+ *
+ * <p>This is the persisted identity of the reply. It is not the routing
+ * {@link Intention}: a course question ({@link Intention#COURSE}) is answered
+ * by the administrative agent and stored as {@link #ADMINISTRATIVE}.</p>
  *
  * @author Rodrigo Prestes Machado
  */
-public interface RouterUseCase {
+public enum AgentKind {
 
-    /**
-     * Classifies the prompt, retrieves context from the corresponding corpus
-     * and streams the chosen assistant's reply.
-     *
-     * @param memoryId conversation id shared by both assistants
-     * @param prompt   the student message
-     * @return the chosen agent and a multi that emits the response as plain text chunks
-     */
-    RoutedAnswer answer(String memoryId, String prompt);
+    /** Programming and discipline content, produced by the teacher agent. */
+    DISCIPLINE,
+
+    /** Administrative and institutional content, produced by the administrative agent. */
+    ADMINISTRATIVE
 }

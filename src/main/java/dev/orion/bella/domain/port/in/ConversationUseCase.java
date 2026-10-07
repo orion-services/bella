@@ -96,4 +96,20 @@ public interface ConversationUseCase {
      */
     Multi<String> chat(User user, String conversationId, String prompt);
 
+    /**
+     * Marks an agent reply as copied to the clipboard.
+     *
+     * <p>The sequence is the position of the message in the conversation, the
+     * same order used when the chat is persisted. Calling this again after the
+     * reply is already copied keeps the flag set and the rest of the chat intact.
+     *
+     * @param conversationId the conversation id
+     * @param orionUserHash  the Orion Users hash of the caller, for ownership validation
+     * @param sequence       zero-based position of the agent reply
+     * @throws java.util.NoSuchElementException if the conversation or the sequence does not exist
+     * @throws SecurityException                if the conversation belongs to a different owner
+     * @throws IllegalArgumentException         if the sequence is not an agent reply
+     */
+    void markAgentMessageCopied(String conversationId, String orionUserHash, int sequence);
+
 }

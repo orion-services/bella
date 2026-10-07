@@ -138,7 +138,11 @@ public class ChatRepository implements Repository, PanacheRepositoryBase<ChatEnt
         if (message instanceof UserMessage) {
             return new UserMessageEntity();
         }
-        return new AgentMessageEntity();
+        AgentMessage agentMessage = (AgentMessage) message;
+        AgentMessageEntity entity = new AgentMessageEntity();
+        entity.setCopied(agentMessage.isCopied());
+        entity.setAgent(agentMessage.getAgent());
+        return entity;
     }
 
     /**
@@ -184,7 +188,11 @@ public class ChatRepository implements Repository, PanacheRepositoryBase<ChatEnt
             userMessage.setUser(user);
             return userMessage;
         }
-        return new AgentMessage();
+        AgentMessageEntity agentEntity = (AgentMessageEntity) messageEntity;
+        AgentMessage agentMessage = new AgentMessage();
+        agentMessage.setCopied(agentEntity.isCopied());
+        agentMessage.setAgent(agentEntity.getAgent());
+        return agentMessage;
     }
 
     /**

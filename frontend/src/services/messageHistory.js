@@ -56,6 +56,9 @@ export function normalizePersistedMessages(messages) {
         type: normalizeRoleType(message?.type),
         content: String(text),
         isNew: false,
+        copied: message?.copied === true,
+        agent: message?.agent ?? null,
+        sequence: index,
         _timestamp: parseMessageTime(message),
         _index: index
       };

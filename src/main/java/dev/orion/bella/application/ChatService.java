@@ -22,6 +22,7 @@ import dev.orion.bella.domain.model.Chat;
 import dev.orion.bella.domain.model.User;
 import dev.orion.bella.domain.model.UserMessage;
 import dev.orion.bella.domain.port.in.ChatUseCase;
+import dev.orion.bella.domain.port.in.RoutedAnswer;
 import dev.orion.bella.domain.port.in.RouterUseCase;
 import dev.orion.bella.domain.port.out.Repository;
 import io.smallrye.mutiny.Multi;
@@ -80,13 +81,16 @@ public class ChatService implements ChatUseCase {
         chatRepository.save(chat);
 
         StringBuilder buffer = new StringBuilder();
+        RoutedAnswer routed = routerUseCase.answer(chat.getId(), message);
 
-        return routerUseCase.answer(chat.getId(), message)
+        return routed.getChunks()
                 .invoke(buffer::append)
                 .onCompletion().invoke(() -> {
                     AgentMessage agentMessage = new AgentMessage();
                     agentMessage.setMessage(buffer.toString());
                     agentMessage.setTimestamp(new Date());
+                    agentMessage.setAgent(routed.getAgent());
+                    agentMessage.setCopied(false);
                     chat.addMessage(agentMessage);
                     chatRepository.save(chat);
                 });

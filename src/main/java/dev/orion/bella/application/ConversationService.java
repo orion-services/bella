@@ -22,9 +22,11 @@ import java.util.Optional;
 
 import dev.orion.bella.domain.model.AgentMessage;
 import dev.orion.bella.domain.model.Chat;
+import dev.orion.bella.domain.model.Message;
 import dev.orion.bella.domain.model.User;
 import dev.orion.bella.domain.model.UserMessage;
 import dev.orion.bella.domain.port.in.ConversationUseCase;
+import dev.orion.bella.domain.port.in.RoutedAnswer;
 import dev.orion.bella.domain.port.in.RouterUseCase;
 import dev.orion.bella.domain.port.out.Repository;
 import io.smallrye.mutiny.Multi;
@@ -108,16 +110,34 @@ public class ConversationService implements ConversationUseCase {
         repository.save(chat);
 
         StringBuilder buffer = new StringBuilder();
+        RoutedAnswer routed = routerUseCase.answer(conversationId, prompt);
 
-        return routerUseCase.answer(conversationId, prompt)
+        return routed.getChunks()
                 .invoke(buffer::append)
                 .onCompletion().invoke(() -> {
                     AgentMessage agentMessage = new AgentMessage();
                     agentMessage.setMessage(buffer.toString());
                     agentMessage.setTimestamp(new Date());
+                    agentMessage.setAgent(routed.getAgent());
+                    agentMessage.setCopied(false);
                     chat.addMessage(agentMessage);
                     repository.save(chat);
                 });
+    }
+
+    @Override
+    public void markAgentMessageCopied(String conversationId, String orionUserHash, int sequence) {
+        Chat chat = ownedConversation(conversationId, orionUserHash);
+        List<Message> messages = chat.getMessages();
+        if (sequence < 0 || sequence >= messages.size()) {
+            throw new NoSuchElementException("Mensagem não encontrada: " + sequence);
+        }
+        Message message = messages.get(sequence);
+        if (!(message instanceof AgentMessage agentMessage)) {
+            throw new IllegalArgumentException("Somente respostas do agente podem ser marcadas como copiadas");
+        }
+        agentMessage.setCopied(true);
+        repository.save(chat);
     }
 
     /**

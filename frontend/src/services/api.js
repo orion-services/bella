@@ -101,6 +101,10 @@ export const apiService = {
     return response.data;
   },
 
+  async markMessageCopied(conversationId, sequence) {
+    await api.patch(`/bella/conversations/${conversationId}/messages/${sequence}/copied`);
+  },
+
   // Memória
   async getMemory(userId, conversationId) {
     try {

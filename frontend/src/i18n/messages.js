@@ -103,7 +103,10 @@ const en = {
     processError: 'Error processing message. Please try again.',
     processConnection: 'Error processing message. Check your connection and try again.',
     sendError: 'Error sending message. Please try again.',
-    sendConnection: 'Error sending message. Check your connection and try again.'
+    sendConnection: 'Error sending message. Check your connection and try again.',
+    copy: 'Copy reply',
+    copied: 'Reply copied',
+    copyError: 'Could not copy the reply. Please try again.'
   },
   settings: {
     title: 'Settings',
@@ -253,7 +256,10 @@ const pt = {
     processError: 'Não foi possível processar a mensagem. Tente de novo.',
     processConnection: 'Não foi possível processar a mensagem. Verifique a conexão e tente de novo.',
     sendError: 'Não foi possível enviar a mensagem. Tente de novo.',
-    sendConnection: 'Não foi possível enviar a mensagem. Verifique a conexão e tente de novo.'
+    sendConnection: 'Não foi possível enviar a mensagem. Verifique a conexão e tente de novo.',
+    copy: 'Copiar resposta',
+    copied: 'Resposta copiada',
+    copyError: 'Não foi possível copiar a resposta. Tente de novo.'
   },
   settings: {
     title: 'Configurações',

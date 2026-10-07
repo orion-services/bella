@@ -22,8 +22,31 @@ test('normalizes the current memory API contract', () => {
   ]);
 
   assert.deepEqual(messages, [
-    { type: 'user', content: 'Pergunta persistida', isNew: false },
-    { type: 'assistant', content: 'Resposta persistida', isNew: false }
+    { type: 'user', content: 'Pergunta persistida', isNew: false, copied: false, agent: null, sequence: 0 },
+    { type: 'assistant', content: 'Resposta persistida', isNew: false, copied: false, agent: null, sequence: 1 }
+  ]);
+});
+
+test('keeps the copied flag and the agent that produced the reply', () => {
+  const messages = normalizePersistedMessages([
+    {
+      type: 'AGENT',
+      message: 'Resposta do professor',
+      copied: true,
+      agent: 'DISCIPLINE',
+      timestamp: '2026-09-29T12:00:01.000Z'
+    }
+  ]);
+
+  assert.deepEqual(messages, [
+    {
+      type: 'assistant',
+      content: 'Resposta do professor',
+      isNew: false,
+      copied: true,
+      agent: 'DISCIPLINE',
+      sequence: 0
+    }
   ]);
 });
 
@@ -34,8 +57,8 @@ test('keeps compatibility with content and gives precedence to message', () => {
   ]);
 
   assert.deepEqual(messages, [
-    { type: 'user', content: 'Contrato antigo', isNew: false },
-    { type: 'assistant', content: 'Contrato atual', isNew: false }
+    { type: 'user', content: 'Contrato antigo', isNew: false, copied: false, agent: null, sequence: 0 },
+    { type: 'assistant', content: 'Contrato atual', isNew: false, copied: false, agent: null, sequence: 1 }
   ]);
 });
 

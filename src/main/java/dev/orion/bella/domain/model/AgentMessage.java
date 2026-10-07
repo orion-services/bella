@@ -23,11 +23,58 @@ package dev.orion.bella.domain.model;
 public class AgentMessage extends Message {
 
     /**
+     * Assistant that produced this reply. Absent on replies stored before the
+     * agent was recorded.
+     */
+    private AgentKind agent;
+
+    /**
+     * Whether the student copied this reply to the clipboard. Starts false.
+     */
+    private boolean copied;
+
+    /**
      * {@inheritDoc}
      */
     @Override
     public String getType() {
         return "AGENT";
+    }
+
+    /**
+     * Returns the assistant that produced this reply.
+     *
+     * @return the agent kind, or {@code null} when it was not recorded
+     */
+    public AgentKind getAgent() {
+        return agent;
+    }
+
+    /**
+     * Sets the assistant that produced this reply.
+     *
+     * @param agent the agent kind to set
+     */
+    public void setAgent(AgentKind agent) {
+        this.agent = agent;
+    }
+
+    /**
+     * Returns whether this reply was copied to the clipboard.
+     *
+     * @return {@code true} when the reply was copied
+     */
+    public boolean isCopied() {
+        return copied;
+    }
+
+    /**
+     * Sets whether this reply was copied to the clipboard.
+     *
+     * @param copied {@code true} when the reply was copied
+     */
+    public void setCopied(boolean copied) {
+        this.copied = copied;
     }
 
 }
