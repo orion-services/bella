@@ -39,11 +39,13 @@
               {{ message.content }}
             </div>
           </v-card>
-          <div 
-            v-else 
-            class="assistant-message-content markdown-content" 
-            v-html="getRenderedMarkdown(message)"
-          ></div>
+          <AssistantMessage
+            v-else
+            :content="message.content"
+            :copied="!!message.copied"
+            :show-copy="canCopyMessage(message, index)"
+            @copy="copyMessage(message)"
+          />
         </div>
         <div v-if="isTyping" class="message-container assistant-message">
           <div class="typing-indicator">
@@ -84,29 +86,16 @@
 </template>
 
 <script>
-import { marked } from 'marked';
-import hljs from 'highlight.js';
-import 'highlight.js/styles/github-dark.css';
 import { apiService } from '../services/api';
 import { authService } from '../services/auth';
 import { normalizePersistedMessages } from '../services/messageHistory';
-
-// breaks:true: útil para respostas da IA com quebras simples; listas/código continuam com regras GFM
-marked.use({
-  breaks: true,
-  gfm: true,
-  highlight: function(code, lang) {
-    const language = hljs.getLanguage(lang) ? lang : 'plaintext';
-    try {
-      return hljs.highlight(code, { language }).value;
-    } catch (err) {
-      return hljs.highlight(code, { language: 'plaintext' }).value;
-    }
-  }
-});
+import AssistantMessage from './AssistantMessage.vue';
 
 export default {
   name: 'ChatInterface',
+  components: {
+    AssistantMessage
+  },
   computed: {
     isTyping() {
       if (!this.isLoading) return false;
@@ -162,12 +151,34 @@ export default {
     }
   },
   methods: {
-    getRenderedMarkdown(message) {
-      if (message.type !== 'assistant') return '';
-      // Do not call cleanContent here, it will be called in renderMarkdown
-      return this.renderMarkdown(message.content);
+    canCopyMessage(message, index) {
+      if (!message.content) return false;
+      return !(this.isLoading && index === this.messages.length - 1);
     },
-    
+
+    async copyMessage(message) {
+      try {
+        await navigator.clipboard.writeText(message.content);
+      } catch (error) {
+        console.error('Error copying message:', error);
+        this.error = this.$t('chat.copyError');
+        return;
+      }
+
+      message.copied = true;
+      if (message.sequence == null || !this.conversationId) {
+        return;
+      }
+
+      try {
+        await apiService.markMessageCopied(this.conversationId, message.sequence);
+      } catch (error) {
+        console.error('Error saving copied flag:', error);
+        message.copied = false;
+        this.error = this.$t('chat.copyError');
+      }
+    },
+
     async initializeChat() {
       try {
         this.initializing = true;
@@ -246,81 +257,6 @@ export default {
       }
     },
 
-    cleanContent(text) {
-      if (!text) return '';
-      // Remove only "data:" prefixes that may appear at the start of lines
-      // Preserve all other content, including markdown
-      let cleaned = text.replace(/^data:\s*/gm, '');
-      // Do not remove spaces or line breaks - marked needs them
-      return cleaned;
-    },
-
-    renderMarkdown(text) {
-      try {
-        if (!text) return '';
-        
-        // Clean content first
-        const cleaned = this.cleanContent(text);
-        if (!cleaned) return '';
-        
-        // Normalize incomplete markdown during streaming
-        const normalized = this.normalizeIncompleteMarkdown(cleaned);
-        
-        // Normalize line endings only — do not "guess" extra breaks (that breaks lists, code, tables).
-        const processed = this.processLineBreaks(normalized);
-
-        const html = marked.parse(processed);
-        
-        // Apply highlight.js after rendering
-        this.$nextTick(() => {
-          const elements = this.$el?.querySelectorAll('.markdown-content');
-          if (elements) {
-            elements.forEach(element => {
-              element.querySelectorAll('pre code').forEach((block) => {
-                if (!block.classList.contains('hljs')) {
-                  hljs.highlightElement(block);
-                }
-              });
-            });
-          }
-        });
-        
-        return html;
-      } catch (error) {
-        console.error('Error rendering markdown:', error);
-        // On error, return escaped text
-        return this.escapeHtml(text);
-      }
-    },
-
-    processLineBreaks(text) {
-      return text
-        .replace(/\r\n/g, '\n')
-        .replace(/\r/g, '\n');
-    },
-
-    normalizeIncompleteMarkdown(text) {
-      // Only try to close incomplete code blocks during streaming
-      // Do not modify other markdown aspects to preserve formatting
-      let normalized = text;
-      
-      // Count backticks to check for incomplete code blocks
-      const codeBlockMatches = normalized.match(/```/g);
-      if (codeBlockMatches && codeBlockMatches.length % 2 !== 0) {
-        // Incomplete code block - add temporary closing
-        normalized += '\n```';
-      }
-      
-      // Return text without other modifications to preserve markdown formatting
-      return normalized;
-    },
-
-    escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    },
-
     async loadHistory() {
       try {
         if (!this.conversationId) {
@@ -391,7 +327,9 @@ export default {
       this.messages.push({
         type: 'user',
         content: userMessage,
-        isNew: true
+        isNew: true,
+        copied: false,
+        sequence: userMsgIndex
       });
 
       // Remove isNew flag after animation
@@ -411,7 +349,10 @@ export default {
       this.messages.push({
         type: 'assistant',
         content: '',
-        isNew: true
+        isNew: true,
+        copied: false,
+        agent: null,
+        sequence: botMessageIndex
       });
 
       try {
@@ -535,256 +476,6 @@ export default {
   border-radius: 18px !important;
   color: rgb(var(--v-theme-on-surface)) !important;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.assistant-message-content {
-  text-align: start;
-  max-width: min(100%, 52rem);
-  padding: 0.75rem 1rem;
-  word-wrap: break-word;
-  overflow-wrap: anywhere;
-  font-size: 0.9375rem;
-  line-height: 1.6;
-  margin: 0 auto;
-  overflow-x: auto;
-}
-
-.markdown-content {
-  word-wrap: break-word;
-  overflow-wrap: anywhere;
-  color: rgba(var(--v-theme-on-surface), 0.87);
-}
-
-/* Paragraphs */
-.markdown-content :deep(p) {
-  margin-bottom: 1rem;
-  line-height: 1.6;
-  min-height: 1.6em; /* Ensure minimum height for paragraphs */
-}
-
-.markdown-content :deep(p:last-child) {
-  margin-bottom: 0;
-}
-
-/* Spacing between consecutive paragraphs */
-.markdown-content :deep(p + p) {
-  margin-top: 0.5rem;
-}
-
-/* Line breaks - ensure they are visible */
-.markdown-content :deep(br) {
-  line-height: 1.6;
-}
-
-/* Ensure spacing between paragraphs */
-.markdown-content :deep(p + p) {
-  margin-top: 0.75rem;
-}
-
-/* Headers */
-.markdown-content :deep(h1),
-.markdown-content :deep(h2),
-.markdown-content :deep(h3),
-.markdown-content :deep(h4),
-.markdown-content :deep(h5),
-.markdown-content :deep(h6) {
-  margin-top: 1.5rem;
-  margin-bottom: 0.75rem;
-  font-weight: 600;
-  line-height: 1.25;
-  color: rgb(var(--v-theme-on-surface));
-}
-
-.markdown-content :deep(h1) {
-  font-size: 1.75rem;
-  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.12);
-  padding-bottom: 0.3rem;
-}
-
-.markdown-content :deep(h2) {
-  font-size: 1.5rem;
-  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.12);
-  padding-bottom: 0.3rem;
-}
-
-.markdown-content :deep(h3) {
-  font-size: 1.25rem;
-}
-
-.markdown-content :deep(h4) {
-  font-size: 1.1rem;
-}
-
-.markdown-content :deep(h5) {
-  font-size: 1rem;
-}
-
-.markdown-content :deep(h6) {
-  font-size: 0.9rem;
-  color: rgba(var(--v-theme-on-surface), 0.6);
-}
-
-.markdown-content :deep(h1:first-child),
-.markdown-content :deep(h2:first-child),
-.markdown-content :deep(h3:first-child) {
-  margin-top: 0;
-}
-
-/* Inline code */
-.markdown-content :deep(code) {
-  background-color: rgba(var(--v-theme-on-surface), 0.08);
-  padding: 0.2em 0.4em;
-  border-radius: 3px;
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 0.9em;
-  color: #e83e8c;
-}
-
-/* Code blocks */
-.markdown-content :deep(pre) {
-  background-color: #1e1e1e;
-  padding: 1rem;
-  border-radius: 6px;
-  overflow-x: auto;
-  margin: 1rem 0;
-  line-height: 1.45;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.markdown-content :deep(pre code) {
-  background-color: transparent;
-  padding: 0;
-  color: #d4d4d4;
-  font-size: 0.9em;
-  display: block;
-  overflow-x: auto;
-}
-
-/* Lists */
-.markdown-content :deep(ul),
-.markdown-content :deep(ol) {
-  margin: 0.75rem 0;
-  padding-left: 2rem;
-  line-height: 1.6;
-}
-
-.markdown-content :deep(li) {
-  margin: 0.25rem 0;
-}
-
-.markdown-content :deep(ul ul),
-.markdown-content :deep(ol ol),
-.markdown-content :deep(ul ol),
-.markdown-content :deep(ol ul) {
-  margin-top: 0.25rem;
-  margin-bottom: 0.25rem;
-}
-
-/* Task lists */
-.markdown-content :deep(input[type="checkbox"]) {
-  margin-right: 0.5rem;
-}
-
-/* Blockquotes */
-.markdown-content :deep(blockquote) {
-  margin: 1rem 0;
-  padding: 0.5rem 1rem;
-  border-left: 4px solid rgba(var(--v-theme-on-surface), 0.2);
-  background-color: rgba(var(--v-theme-on-surface), 0.04);
-  color: rgba(var(--v-theme-on-surface), 0.7);
-  font-style: italic;
-}
-
-.markdown-content :deep(blockquote p:last-child) {
-  margin-bottom: 0;
-}
-
-/* Tables — keep table layout; scroll on the message container */
-.markdown-content :deep(table) {
-  border-collapse: collapse;
-  margin: 1rem 0;
-  width: 100%;
-  display: table;
-  table-layout: auto;
-}
-
-.markdown-content :deep(thead) {
-  background-color: rgba(var(--v-theme-on-surface), 0.06);
-}
-
-.markdown-content :deep(th),
-.markdown-content :deep(td) {
-  border: 1px solid rgba(var(--v-theme-on-surface), 0.2);
-  padding: 0.5rem 0.75rem;
-  text-align: left;
-}
-
-.markdown-content :deep(th) {
-  font-weight: 600;
-  background-color: rgba(var(--v-theme-on-surface), 0.06);
-}
-
-.markdown-content :deep(tr:nth-child(even)) {
-  background-color: rgba(var(--v-theme-on-surface), 0.04);
-}
-
-/* Links */
-.markdown-content :deep(a) {
-  color: rgb(var(--v-theme-primary));
-  text-decoration: none;
-}
-
-.markdown-content :deep(a:hover) {
-  text-decoration: underline;
-}
-
-.markdown-content :deep(a:visited) {
-  color: rgb(var(--v-theme-primary));
-}
-
-/* Images */
-.markdown-content :deep(img) {
-  max-width: 100%;
-  height: auto;
-  border-radius: 4px;
-  margin: 1rem 0;
-  display: block;
-}
-
-/* Horizontal rule */
-.markdown-content :deep(hr) {
-  border: none;
-  border-top: 1px solid rgba(var(--v-theme-on-surface), 0.12);
-  margin: 1.5rem 0;
-}
-
-/* Bold and italic text - use higher specificity */
-.assistant-message-content.markdown-content :deep(strong),
-.assistant-message-content.markdown-content :deep(b),
-.markdown-content :deep(strong),
-.markdown-content :deep(b) {
-  font-weight: 700 !important;
-  font-weight: bold !important;
-  color: rgb(var(--v-theme-on-surface)) !important;
-  display: inline;
-}
-
-.markdown-content :deep(em),
-.markdown-content :deep(i) {
-  font-style: italic;
-}
-
-/* Strikethrough text */
-.markdown-content :deep(del),
-.markdown-content :deep(s) {
-  text-decoration: line-through;
-  opacity: 0.7;
-}
-
-/* Ensure content preserves formatting */
-.markdown-content {
-  word-wrap: break-word;
-  overflow-wrap: break-word;
 }
 
 .typing-indicator {

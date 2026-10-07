@@ -17,13 +17,14 @@ package dev.orion.bella.application;
 
 import dev.orion.bella.adapter.out.ai.AdministrativeAgent;
 import dev.orion.bella.adapter.out.ai.TeacherAgent;
+import dev.orion.bella.domain.model.AgentKind;
 import dev.orion.bella.domain.model.Intention;
 import dev.orion.bella.domain.model.RagQuery;
 import dev.orion.bella.domain.model.RagResponse;
+import dev.orion.bella.domain.port.in.RoutedAnswer;
 import dev.orion.bella.domain.port.in.RouterUseCase;
 import dev.orion.bella.domain.port.out.EmbeddingRepository;
 import dev.orion.bella.domain.port.out.QuestionRouter;
-import io.smallrye.mutiny.Multi;
 
 /**
  * Picks the teacher or the administrative agent and retrieves context only from that corpus.
@@ -68,7 +69,7 @@ public class AssistantRouter implements RouterUseCase {
      * {@inheritDoc}
      */
     @Override
-    public Multi<String> answer(String memoryId, String prompt) {
+    public RoutedAnswer answer(String memoryId, String prompt) {
         Intention intent = questionRouter.classify(prompt);
         RagQuery query = new RagQuery(prompt, maxResults, minScore, intent.corpus());
         RagResponse ragResponse = embeddingRepository.searchChunks(query);
@@ -76,8 +77,10 @@ public class AssistantRouter implements RouterUseCase {
                 ? DEFAULT_CONTEXT : String.join("\n\n", ragResponse.getContexts());
 
         if (intent == Intention.COURSE) {
-            return administrativeAgent.answer(memoryId, context, prompt);
+            return new RoutedAnswer(AgentKind.ADMINISTRATIVE,
+                    administrativeAgent.answer(memoryId, context, prompt));
         }
-        return teacherAgent.answer(memoryId, context, prompt);
+        return new RoutedAnswer(AgentKind.DISCIPLINE,
+                teacherAgent.answer(memoryId, context, prompt));
     }
 }

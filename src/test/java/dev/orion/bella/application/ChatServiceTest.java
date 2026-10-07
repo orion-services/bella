@@ -1,6 +1,7 @@
 package dev.orion.bella.application;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import dev.orion.bella.adapter.out.ai.AdministrativeAgent;
 import dev.orion.bella.adapter.out.ai.TeacherAgent;
+import dev.orion.bella.domain.model.AgentKind;
 import dev.orion.bella.domain.model.Chat;
 import dev.orion.bella.domain.model.Intention;
 import dev.orion.bella.domain.model.RagCorpus;
@@ -149,6 +151,8 @@ class ChatServiceTest {
         assertEquals(1, chat.getAgentMessages().size());
         assertEquals("resposta", chat.getAgentMessages().get(0).getMessage());
         assertSame(chat, chat.getAgentMessages().get(0).getChat());
+        assertEquals(AgentKind.DISCIPLINE, chat.getAgentMessages().get(0).getAgent());
+        assertFalse(chat.getAgentMessages().get(0).isCopied());
     }
 
     /**
@@ -198,6 +202,9 @@ class ChatServiceTest {
         assertTrue(teacherAgent.prompts.isEmpty());
         assertEquals(List.of("perfil do egresso"), administrativeAgent.contexts);
         assertEquals(RagCorpus.COURSE, embeddingRepository.lastQuery.getCorpus());
+        Chat chat = chatRepository.findLastByPhone("5511999999999").orElseThrow();
+        assertEquals(AgentKind.ADMINISTRATIVE, chat.getAgentMessages().get(0).getAgent());
+        assertFalse(chat.getAgentMessages().get(0).isCopied());
     }
 
     /**

@@ -266,6 +266,35 @@ public class ConversationResource {
     }
 
     /**
+     * Marks an agent reply in a conversation owned by the authenticated user as copied.
+     *
+     * @param conversationId the conversation that contains the reply
+     * @param sequence       zero-based position of the reply in the conversation
+     * @return HTTP 204 No Content
+     * @throws WebApplicationException with 404 when the conversation or the sequence does not
+     *         exist, 403 when the conversation belongs to another user, or 400 when the
+     *         sequence is not an agent reply
+     */
+    @PATCH
+    @Path("/conversations/{conversationId}/messages/{sequence}/copied")
+    @RolesAllowed("user")
+    @Blocking
+    public Response markMessageCopied(@PathParam("conversationId") String conversationId,
+            @PathParam("sequence") int sequence) {
+        User user = authenticatedUser();
+        Log.info("Marking message " + sequence + " as copied in conversation " + conversationId);
+        try {
+            handleOwnership(() -> {
+                conversationUseCase.markAgentMessageCopied(conversationId, user.getOrionUserHash(), sequence);
+                return null;
+            });
+        } catch (IllegalArgumentException e) {
+            throw new WebApplicationException(e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+        return Response.noContent().build();
+    }
+
+    /**
      * Runs a conversation-owning operation, translating domain ownership failures into
      * the appropriate JAX-RS HTTP responses.
      *

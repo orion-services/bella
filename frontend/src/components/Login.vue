@@ -24,9 +24,8 @@
                 required
                 prepend-inner-icon="mdi-lock"
                 :type="showPassword ? 'text' : 'password'"
+                hide-details="auto"
                 @keydown.enter.prevent="login"
-                :hint="$t('auth.passwordHintLogin')"
-                persistent-hint
               >
                 <template #append-inner>
                   <v-btn
@@ -40,6 +39,16 @@
                   </v-btn>
                 </template>
               </v-text-field>
+
+              <div class="d-flex justify-end mt-1">
+                <v-btn text to="/recover-password" class="px-0" density="compact">
+                  {{ $t('auth.forgotPassword') }}
+                </v-btn>
+              </div>
+
+              <div class="text-caption text-medium-emphasis px-1">
+                {{ $t('auth.passwordHintLogin') }}
+              </div>
 
               <v-alert v-if="error" type="error" class="mt-4">
                 {{ error }}
@@ -80,9 +89,6 @@
           </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn text to="/recover-password">
-              {{ $t('auth.forgotPassword') }}
-            </v-btn>
             <v-btn text to="/register">
               {{ $t('auth.noAccount') }}
             </v-btn>
