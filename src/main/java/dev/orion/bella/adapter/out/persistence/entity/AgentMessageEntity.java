@@ -27,7 +27,8 @@ import jakarta.persistence.Enumerated;
  *
  * <p>The columns live on the shared {@code message} table
  * ({@link jakarta.persistence.InheritanceType#SINGLE_TABLE}). User rows leave
- * {@code agent} null and rely on the database default for {@code copied}.</p>
+ * {@code agent} null and rely on the database default for {@code copied} and
+ * {@code skill_activated}.</p>
  *
  * @author Rodrigo Prestes Machado
  */
@@ -40,6 +41,12 @@ public class AgentMessageEntity extends MessageEntity {
      */
     @Column(name = "copied", nullable = false, columnDefinition = "boolean not null default false")
     private boolean copied;
+
+    /**
+     * Whether the reply activated a skill during the turn.
+     */
+    @Column(name = "skill_activated", nullable = false, columnDefinition = "boolean not null default false")
+    private boolean skillActivated;
 
     /**
      * Assistant that produced the reply. Null for replies stored before the agent was recorded.
@@ -64,6 +71,24 @@ public class AgentMessageEntity extends MessageEntity {
      */
     public void setCopied(boolean copied) {
         this.copied = copied;
+    }
+
+    /**
+     * Returns whether the reply activated a skill during the turn.
+     *
+     * @return {@code true} when a skill was activated
+     */
+    public boolean isSkillActivated() {
+        return skillActivated;
+    }
+
+    /**
+     * Sets whether the reply activated a skill during the turn.
+     *
+     * @param skillActivated {@code true} when a skill was activated
+     */
+    public void setSkillActivated(boolean skillActivated) {
+        this.skillActivated = skillActivated;
     }
 
     /**
