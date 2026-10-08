@@ -29,6 +29,7 @@ import dev.orion.bella.domain.port.in.ConversationUseCase;
 import dev.orion.bella.domain.port.in.RoutedAnswer;
 import dev.orion.bella.domain.port.in.RouterUseCase;
 import dev.orion.bella.domain.port.out.Repository;
+import dev.orion.bella.domain.port.out.SkillActivation;
 import io.smallrye.mutiny.Multi;
 
 /**
@@ -50,15 +51,20 @@ public class ConversationService implements ConversationUseCase {
     /** Chooses the teacher or the administrative agent and retrieves the matching corpus. */
     private final RouterUseCase routerUseCase;
 
+    /** Remembers whether the turn activated a skill, until the reply is saved. */
+    private final SkillActivation skillActivation;
+
     /**
      * Creates the conversation service with its driven ports.
      *
-     * @param repository       port used to persist conversations
-     * @param routerUseCase routes the message and retrieves the matching corpus
+     * @param repository      port used to persist conversations
+     * @param routerUseCase   routes the message and retrieves the matching corpus
+     * @param skillActivation port that reports whether this turn activated a skill
      */
-    public ConversationService(Repository repository, RouterUseCase routerUseCase) {
+    public ConversationService(Repository repository, RouterUseCase routerUseCase, SkillActivation skillActivation) {
         this.repository = repository;
         this.routerUseCase = routerUseCase;
+        this.skillActivation = skillActivation;
     }
 
     @Override
@@ -114,12 +120,14 @@ public class ConversationService implements ConversationUseCase {
 
         return routed.getChunks()
                 .invoke(buffer::append)
+                .onFailure().invoke(error -> skillActivation.consume(conversationId))
                 .onCompletion().invoke(() -> {
                     AgentMessage agentMessage = new AgentMessage();
                     agentMessage.setMessage(buffer.toString());
                     agentMessage.setTimestamp(new Date());
                     agentMessage.setAgent(routed.getAgent());
                     agentMessage.setCopied(false);
+                    agentMessage.setSkillActivated(skillActivation.consume(conversationId));
                     chat.addMessage(agentMessage);
                     repository.save(chat);
                 });

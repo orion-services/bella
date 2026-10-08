@@ -25,6 +25,7 @@ import dev.orion.bella.domain.port.in.ChatUseCase;
 import dev.orion.bella.domain.port.in.RoutedAnswer;
 import dev.orion.bella.domain.port.in.RouterUseCase;
 import dev.orion.bella.domain.port.out.Repository;
+import dev.orion.bella.domain.port.out.SkillActivation;
 import io.smallrye.mutiny.Multi;
 
 /**
@@ -50,17 +51,23 @@ public class ChatService implements ChatUseCase {
     /** Maximum idle time, in milliseconds, before a new chat session starts ({@code chat.inactivity-threshold-minutes}). */
     private final long inactivityThresholdMs;
 
+    /** Remembers whether the turn activated a skill, until the reply is saved. */
+    private final SkillActivation skillActivation;
+
     /**
      * Creates the chat service with its driven ports.
      *
      * @param chatRepository        port used to persist chats
-     * @param routerUseCase      routes the message and retrieves the matching corpus
+     * @param routerUseCase         routes the message and retrieves the matching corpus
      * @param inactivityThresholdMs maximum idle time, in milliseconds, before a new chat session starts
+     * @param skillActivation       port that reports whether this turn activated a skill
      */
-    public ChatService(Repository chatRepository, RouterUseCase routerUseCase, long inactivityThresholdMs) {
+    public ChatService(Repository chatRepository, RouterUseCase routerUseCase, long inactivityThresholdMs,
+            SkillActivation skillActivation) {
         this.chatRepository = chatRepository;
         this.routerUseCase = routerUseCase;
         this.inactivityThresholdMs = inactivityThresholdMs;
+        this.skillActivation = skillActivation;
     }
 
     /**
@@ -85,12 +92,14 @@ public class ChatService implements ChatUseCase {
 
         return routed.getChunks()
                 .invoke(buffer::append)
+                .onFailure().invoke(error -> skillActivation.consume(chat.getId()))
                 .onCompletion().invoke(() -> {
                     AgentMessage agentMessage = new AgentMessage();
                     agentMessage.setMessage(buffer.toString());
                     agentMessage.setTimestamp(new Date());
                     agentMessage.setAgent(routed.getAgent());
                     agentMessage.setCopied(false);
+                    agentMessage.setSkillActivated(skillActivation.consume(chat.getId()));
                     chat.addMessage(agentMessage);
                     chatRepository.save(chat);
                 });

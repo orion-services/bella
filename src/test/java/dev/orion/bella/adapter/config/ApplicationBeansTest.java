@@ -15,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import dev.orion.bella.adapter.out.ai.AdministrativeAgent;
+import dev.orion.bella.adapter.out.ai.InMemorySkillActivation;
 import dev.orion.bella.adapter.out.ai.TeacherAgent;
 import dev.orion.bella.application.ChatService;
 import dev.orion.bella.domain.model.Intention;
@@ -83,6 +84,7 @@ class ApplicationBeansTest {
         applicationBeans.teacherAgent = teacherAgent;
         applicationBeans.administrativeAgent = administrativeAgent;
         applicationBeans.questionRouter = questionRouter;
+        applicationBeans.skillActivation = new InMemorySkillActivation();
     }
 
     /**

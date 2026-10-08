@@ -29,6 +29,7 @@ import dev.orion.bella.domain.port.out.EmbeddingRepository;
 import dev.orion.bella.domain.port.out.IngestPort;
 import dev.orion.bella.domain.port.out.QuestionRouter;
 import dev.orion.bella.domain.port.out.Repository;
+import dev.orion.bella.domain.port.out.SkillActivation;
 import dev.orion.bella.domain.port.out.WebScraperPort;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
@@ -50,6 +51,10 @@ public class ApplicationBeans {
 
     @Inject
     Repository chatRepository;
+
+    /** Port that reports whether the current turn activated a skill. */
+    @Inject
+    SkillActivation skillActivation;
 
     /** Port for embedding-based retrieval, used by the RAG use cases. */
     @Inject
@@ -96,7 +101,7 @@ public class ApplicationBeans {
     @ApplicationScoped
     public ChatUseCase chatUseCase() {
         long inactivityThresholdMs = chatInactivityThresholdMinutes * 60_000L;
-        return new ChatService(chatRepository, routerUseCase(), inactivityThresholdMs);
+        return new ChatService(chatRepository, routerUseCase(), inactivityThresholdMs, skillActivation);
     }
 
     /**
@@ -108,7 +113,7 @@ public class ApplicationBeans {
     @Produces
     @ApplicationScoped
     public ConversationUseCase conversationUseCase() {
-        return new ConversationService(chatRepository, routerUseCase());
+        return new ConversationService(chatRepository, routerUseCase(), skillActivation);
     }
 
     private RouterUseCase routerUseCase() {

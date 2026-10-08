@@ -141,6 +141,7 @@ public class ChatRepository implements Repository, PanacheRepositoryBase<ChatEnt
         AgentMessage agentMessage = (AgentMessage) message;
         AgentMessageEntity entity = new AgentMessageEntity();
         entity.setCopied(agentMessage.isCopied());
+        entity.setSkillActivated(agentMessage.isSkillActivated());
         entity.setAgent(agentMessage.getAgent());
         return entity;
     }
@@ -191,6 +192,7 @@ public class ChatRepository implements Repository, PanacheRepositoryBase<ChatEnt
         AgentMessageEntity agentEntity = (AgentMessageEntity) messageEntity;
         AgentMessage agentMessage = new AgentMessage();
         agentMessage.setCopied(agentEntity.isCopied());
+        agentMessage.setSkillActivated(agentEntity.isSkillActivated());
         agentMessage.setAgent(agentEntity.getAgent());
         return agentMessage;
     }

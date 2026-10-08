@@ -34,6 +34,11 @@ public class AgentMessage extends Message {
     private boolean copied;
 
     /**
+     * Whether this reply activated a skill during the turn. Starts false.
+     */
+    private boolean skillActivated;
+
+    /**
      * {@inheritDoc}
      */
     @Override
@@ -75,6 +80,24 @@ public class AgentMessage extends Message {
      */
     public void setCopied(boolean copied) {
         this.copied = copied;
+    }
+
+    /**
+     * Returns whether this reply activated a skill during the turn.
+     *
+     * @return {@code true} when a skill was activated
+     */
+    public boolean isSkillActivated() {
+        return skillActivated;
+    }
+
+    /**
+     * Sets whether this reply activated a skill during the turn.
+     *
+     * @param skillActivated {@code true} when a skill was activated
+     */
+    public void setSkillActivated(boolean skillActivated) {
+        this.skillActivated = skillActivated;
     }
 
 }

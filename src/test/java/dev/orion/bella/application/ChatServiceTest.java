@@ -16,6 +16,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import dev.orion.bella.adapter.out.ai.AdministrativeAgent;
+import dev.orion.bella.adapter.out.ai.InMemorySkillActivation;
 import dev.orion.bella.adapter.out.ai.TeacherAgent;
 import dev.orion.bella.domain.model.AgentKind;
 import dev.orion.bella.domain.model.Chat;
@@ -71,18 +72,24 @@ class ChatServiceTest {
     private ChatService chatService;
 
     /**
+     * Port that the teacher fake marks when a test simulates a skill activation.
+     */
+    private InMemorySkillActivation skillActivation;
+
+    /**
      * Prepares fakes and the service before each test.
      */
     @BeforeEach
     void setUp() {
         chatRepository = new FakeChatRepository();
         embeddingRepository = new FakeEmbeddingRepository();
-        teacherAgent = new FakeTeacherAgent();
+        skillActivation = new InMemorySkillActivation();
+        teacherAgent = new FakeTeacherAgent(skillActivation);
         administrativeAgent = new FakeAdministrativeAgent();
         questionRouter = new FakeQuestionRouter();
         AssistantRouter assistantRouter = new AssistantRouter(embeddingRepository, teacherAgent,
                 administrativeAgent, questionRouter, 3, 0.6);
-        chatService = new ChatService(chatRepository, assistantRouter, 30 * MINUTE_MS);
+        chatService = new ChatService(chatRepository, assistantRouter, 30 * MINUTE_MS, skillActivation);
     }
 
     /**
@@ -153,6 +160,21 @@ class ChatServiceTest {
         assertSame(chat, chat.getAgentMessages().get(0).getChat());
         assertEquals(AgentKind.DISCIPLINE, chat.getAgentMessages().get(0).getAgent());
         assertFalse(chat.getAgentMessages().get(0).isCopied());
+        assertFalse(chat.getAgentMessages().get(0).isSkillActivated());
+    }
+
+    /**
+     * Ensures a skill marked for this chat is stored on the saved agent reply and then cleared.
+     */
+    @Test
+    void chat_persistsSkillActivated_whenTheTurnMarkedIt() {
+        teacherAgent.activateSkill = true;
+
+        chatService.chat("5511999999999", "qual a resposta?").collect().asList().await().indefinitely();
+
+        Chat chat = chatRepository.findLastByPhone("5511999999999").orElseThrow();
+        assertTrue(chat.getAgentMessages().get(0).isSkillActivated());
+        assertFalse(skillActivation.consume(chat.getId()));
     }
 
     /**
@@ -205,6 +227,7 @@ class ChatServiceTest {
         Chat chat = chatRepository.findLastByPhone("5511999999999").orElseThrow();
         assertEquals(AgentKind.ADMINISTRATIVE, chat.getAgentMessages().get(0).getAgent());
         assertFalse(chat.getAgentMessages().get(0).isCopied());
+        assertFalse(chat.getAgentMessages().get(0).isSkillActivated());
     }
 
     /**
@@ -344,11 +367,33 @@ class ChatServiceTest {
          */
         private List<String> chunks = List.of("resposta");
 
+        /**
+         * When true, the next answer marks a skill activation for its memory id.
+         */
+        private boolean activateSkill;
+
+        /**
+         * Port marked when {@link #activateSkill} is true.
+         */
+        private final InMemorySkillActivation skillActivation;
+
+        /**
+         * Creates the fake with the port a test can observe.
+         *
+         * @param skillActivation port marked when this fake simulates a skill activation
+         */
+        private FakeTeacherAgent(InMemorySkillActivation skillActivation) {
+            this.skillActivation = skillActivation;
+        }
+
         @Override
         public Multi<String> answer(String memoryId, String context, String prompt) {
             memoryIds.add(memoryId);
             contexts.add(context);
             prompts.add(prompt);
+            if (activateSkill) {
+                skillActivation.mark(memoryId);
+            }
             return Multi.createFrom().iterable(chunks);
         }
     }
