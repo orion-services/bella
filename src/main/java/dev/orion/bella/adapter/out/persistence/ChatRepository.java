@@ -39,6 +39,9 @@ import jakarta.transaction.Transactional;
 /**
  * PostgreSQL adapter that persists chat sessions with Hibernate Panache.
  *
+ * <p>Hiding a conversation sets {@code deleted_at} and leaves the chat row and its
+ * messages stored for later analysis. Product reads skip those rows.</p>
+ *
  * @author Rodrigo Prestes Machado
  */
 @ApplicationScoped
@@ -50,7 +53,7 @@ public class ChatRepository implements Repository, PanacheRepositoryBase<ChatEnt
     @Override
     @Transactional
     public Optional<Chat> findLastByPhone(String phoneNumber) {
-        return find("phoneNumber = ?1 order by startedAt desc", phoneNumber)
+        return find("phoneNumber = ?1 and deletedAt is null order by startedAt desc", phoneNumber)
                 .firstResultOptional()
                 .map(this::toDomain);
     }
@@ -68,6 +71,9 @@ public class ChatRepository implements Repository, PanacheRepositoryBase<ChatEnt
         }
 
         ChatEntity entity = findById(chat.getId());
+        if (entity != null && entity.getDeletedAt() != null) {
+            return;
+        }
         boolean isNew = entity == null;
         if (isNew) {
             entity = new ChatEntity();
@@ -103,7 +109,9 @@ public class ChatRepository implements Repository, PanacheRepositoryBase<ChatEnt
     @Override
     @Transactional
     public Optional<Chat> findConversationById(String id) {
-        return Optional.ofNullable(findById(id)).map(this::toDomain);
+        return find("id = ?1 and deletedAt is null", id)
+                .firstResultOptional()
+                .map(this::toDomain);
     }
 
     /**
@@ -112,7 +120,7 @@ public class ChatRepository implements Repository, PanacheRepositoryBase<ChatEnt
     @Override
     @Transactional
     public List<Chat> findAllByOrionUserHash(String orionUserHash) {
-        return find("orionUserHash = ?1 order by startedAt desc", orionUserHash)
+        return find("orionUserHash = ?1 and deletedAt is null order by startedAt desc", orionUserHash)
                 .<ChatEntity>list()
                 .stream()
                 .map(this::toDomain)
@@ -125,7 +133,11 @@ public class ChatRepository implements Repository, PanacheRepositoryBase<ChatEnt
     @Override
     @Transactional
     public void deleteConversation(String id) {
-        deleteById(id);
+        ChatEntity entity = findById(id);
+        if (entity == null || entity.getDeletedAt() != null) {
+            return;
+        }
+        entity.setDeletedAt(Instant.now());
     }
 
     /**

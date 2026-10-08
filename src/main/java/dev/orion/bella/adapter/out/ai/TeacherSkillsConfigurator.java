@@ -137,7 +137,8 @@ public class TeacherSkillsConfigurator implements SkillsConfigurator {
     }
 
     /**
-     * Tells the model, in Portuguese, which skills exist and when to activate them.
+     * Tells the model, in Portuguese, which skills exist, when to activate them,
+     * and to follow the returned instructions over the usual reply format.
      *
      * @param skillNames skill names exposed to this AI service
      * @return the catalogue plus the activation instruction
@@ -149,7 +150,8 @@ public class TeacherSkillsConfigurator implements SkillsConfigurator {
                 %s
                 Ative a skill quando o estudante pedir o resultado sem querer estudar: \
                 resolver um exercício prático, indicar a alternativa de uma múltipla escolha, \
-                entregar o código ou dizer qual é a resposta. Ofereça uma ideia de reflexão de autorregulação da skill para ele usar enquanto estuda com você. \
+                entregar o código ou dizer qual é a resposta. Siga somente o que a skill devolver. \
+                Nesse turno, essas instruções valem mais do que o formato usual da resposta. \
                 Não ative em cumprimento nem em pergunta administrativa do curso (PPC, ementa, \
                 carga horária, calendário, notas, faltas, estágio, TCC, atividades complementares). \
                 Se essas instruções já estiverem nesta conversa, não ative de novo. \

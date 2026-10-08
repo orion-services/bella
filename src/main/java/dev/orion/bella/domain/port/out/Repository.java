@@ -28,10 +28,11 @@ import dev.orion.bella.domain.model.Chat;
 public interface Repository {
 
     /**
-     * Finds the most recent chat for the user identified by phone number.
+     * Finds the most recent visible chat for the user identified by phone number.
+     * Conversations hidden by a logical delete are ignored.
      *
      * @param phoneNumber the user phone number
-     * @return the last chat, or empty when the user has no chat yet
+     * @return the last visible chat, or empty when the user has no visible chat yet
      */
     Optional<Chat> findLastByPhone(String phoneNumber);
 
@@ -43,26 +44,28 @@ public interface Repository {
     void save(Chat chat);
 
     /**
-     * Finds a chat/conversation by its unique identifier.
+     * Finds a visible chat/conversation by its unique identifier.
+     * A logically deleted conversation is treated as absent.
      *
      * @param id the chat id
-     * @return the chat, or empty when no chat with that id exists
+     * @return the chat, or empty when no visible chat with that id exists
      */
     Optional<Chat> findConversationById(String id);
 
     /**
-     * Finds all chats/conversations owned by the given Orion Users hash, most recently
-     * started first.
+     * Finds all visible chats/conversations owned by the given Orion Users hash, most
+     * recently started first. Logically deleted conversations are omitted.
      *
      * @param orionUserHash the Orion Users hash that identifies the owner
-     * @return the owner's chats, in reverse chronological order
+     * @return the owner's visible chats, in reverse chronological order
      */
     List<Chat> findAllByOrionUserHash(String orionUserHash);
 
     /**
-     * Deletes the chat/conversation with the given identifier, if it exists.
+     * Hides the chat/conversation with the given identifier, if it exists.
+     * The chat row and its messages stay stored for later analysis.
      *
-     * @param id the chat id to delete
+     * @param id the chat id to hide
      */
     void deleteConversation(String id);
 

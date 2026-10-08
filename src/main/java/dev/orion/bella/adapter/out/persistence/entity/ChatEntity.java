@@ -19,6 +19,8 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hibernate.annotations.DynamicUpdate;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -35,6 +37,7 @@ import jakarta.persistence.Table;
  */
 @Entity
 @Table(name = "chat")
+@DynamicUpdate
 public class ChatEntity {
 
     /**
@@ -75,6 +78,13 @@ public class ChatEntity {
      */
     @Column(name = "started_at", nullable = false)
     private Instant startedAt;
+
+    /**
+     * Instant when the owner hid this conversation in the web UI. Null while the
+     * conversation is visible. The row and its messages stay stored for later analysis.
+     */
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
 
     /**
      * Messages that belong to this chat, in chronological order.
@@ -189,6 +199,24 @@ public class ChatEntity {
      */
     public void setStartedAt(Instant startedAt) {
         this.startedAt = startedAt;
+    }
+
+    /**
+     * Returns when the owner hid this conversation, or {@code null} while it is visible.
+     *
+     * @return the logical-delete timestamp
+     */
+    public Instant getDeletedAt() {
+        return deletedAt;
+    }
+
+    /**
+     * Sets when the owner hid this conversation.
+     *
+     * @param deletedAt the logical-delete timestamp, or {@code null} to keep it visible
+     */
+    public void setDeletedAt(Instant deletedAt) {
+        this.deletedAt = deletedAt;
     }
 
     /**

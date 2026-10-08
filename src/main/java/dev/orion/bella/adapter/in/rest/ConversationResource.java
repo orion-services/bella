@@ -183,7 +183,8 @@ public class ConversationResource {
     }
 
     /**
-     * Deletes a conversation owned by the authenticated user.
+     * Hides a conversation owned by the authenticated user.
+     * The conversation and its messages stay stored for later analysis.
      *
      * @param conversationId the conversation to delete
      * @param userId         query param (used for logging only; authorisation is JWT-based)
@@ -197,7 +198,7 @@ public class ConversationResource {
     public Response deleteConversation(@PathParam("conversationId") String conversationId,
             @QueryParam("userId") String userId) {
         User user = authenticatedUser();
-        Log.info("Deleting conversation " + conversationId + " by user " + user.getOrionUserHash());
+        Log.info("Hiding conversation " + conversationId + " by user " + user.getOrionUserHash());
         handleOwnership(() -> {
             conversationUseCase.deleteConversation(conversationId, user.getOrionUserHash());
             return null;
