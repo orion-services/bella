@@ -78,7 +78,8 @@ public interface ConversationUseCase {
     Chat renameConversation(String conversationId, String orionUserHash, String title);
 
     /**
-     * Deletes a conversation, if it belongs to the given owner.
+     * Hides a conversation from the owner, if it belongs to them.
+     * The conversation and its messages stay stored for later analysis.
      *
      * @param conversationId the conversation id
      * @param orionUserHash  the Orion Users hash of the caller, for ownership validation
