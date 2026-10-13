@@ -18,6 +18,7 @@ package dev.orion.bella.adapter.out.ai;
 import dev.langchain4j.service.MemoryId;
 import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
+import dev.langchain4j.service.guardrail.InputGuardrails;
 import io.quarkiverse.langchain4j.RegisterAiService;
 import io.smallrye.mutiny.Multi;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -34,6 +35,7 @@ public interface AdministrativeAgent {
 
     /**
      * Streams a reply grounded in institutional documents.
+     * {@link PromptInjectionGuard} runs before the model.
      *
      * @param memoryId same conversation id used by {@link TeacherAgent}, so follow-up
      *                 turns stay in one memory
@@ -42,6 +44,7 @@ public interface AdministrativeAgent {
      * @return a multi that emits the response chunks
      */
     @SystemMessage(fromResource = "/prompts/administrative.md")
-    @UserMessage("Contexto: {context}\n\nPergunta: {prompt}")
+    @UserMessage("Contexto: {context}\n\nMensagem do estudante: {prompt}")
+    @InputGuardrails(PromptInjectionGuard.class)
     Multi<String> answer(@MemoryId String memoryId, String context, String prompt);
 }

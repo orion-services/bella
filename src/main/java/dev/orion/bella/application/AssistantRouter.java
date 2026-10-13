@@ -15,6 +15,11 @@
  */
 package dev.orion.bella.application;
 
+import java.util.function.Supplier;
+
+import dev.langchain4j.guardrail.InputGuardrailException;
+import io.smallrye.mutiny.Multi;
+
 import dev.orion.bella.adapter.out.ai.AdministrativeAgent;
 import dev.orion.bella.adapter.out.ai.TeacherAgent;
 import dev.orion.bella.domain.model.AgentKind;
@@ -37,6 +42,12 @@ import dev.orion.bella.domain.port.out.QuestionRouter;
 public class AssistantRouter implements RouterUseCase {
 
     private static final String DEFAULT_CONTEXT = "";
+
+    /**
+     * Reply returned when the input guardrail rejects the student message.
+     */
+    static final String BLOCKED_REPLY = "Desculpe, não posso atender essa mensagem. "
+            + "Posso ajudar com programação da disciplina ou com informações do curso.";
 
     private final EmbeddingRepository embeddingRepository;
     private final TeacherAgent teacherAgent;
@@ -78,9 +89,38 @@ public class AssistantRouter implements RouterUseCase {
 
         if (intent == Intention.COURSE) {
             return new RoutedAnswer(AgentKind.ADMINISTRATIVE,
-                    administrativeAgent.answer(memoryId, context, prompt));
+                    guarded(() -> administrativeAgent.answer(memoryId, context, prompt)));
         }
         return new RoutedAnswer(AgentKind.DISCIPLINE,
-                teacherAgent.answer(memoryId, context, prompt));
+                guarded(() -> teacherAgent.answer(memoryId, context, prompt)));
+    }
+
+    /**
+     * Turns a rejected message into the fixed reply, whether the guardrail fails the stream
+     * or throws before the stream starts. Other failures keep propagating.
+     *
+     * @param call invocation of an assistant
+     * @return the assistant stream, or a single blocked reply when the input guardrail rejects it
+     */
+    private static Multi<String> guarded(Supplier<Multi<String>> call) {
+        try {
+            return call.get()
+                    .onFailure(AssistantRouter::causedByInputGuardrail)
+                    .recoverWithItem(BLOCKED_REPLY);
+        } catch (RuntimeException exception) {
+            if (causedByInputGuardrail(exception)) {
+                return Multi.createFrom().item(BLOCKED_REPLY);
+            }
+            throw exception;
+        }
+    }
+
+    private static boolean causedByInputGuardrail(Throwable failure) {
+        for (Throwable current = failure; current != null; current = current.getCause()) {
+            if (current instanceof InputGuardrailException) {
+                return true;
+            }
+        }
+        return false;
     }
 }

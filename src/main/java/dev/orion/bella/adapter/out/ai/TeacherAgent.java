@@ -18,6 +18,7 @@ package dev.orion.bella.adapter.out.ai;
 import dev.langchain4j.service.MemoryId;
 import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
+import dev.langchain4j.service.guardrail.InputGuardrails;
 import io.quarkiverse.langchain4j.RegisterAiService;
 import io.quarkiverse.langchain4j.skills.Skills;
 import io.smallrye.mutiny.Multi;
@@ -40,6 +41,7 @@ public interface TeacherAgent {
 
     /**
      * Streams a teacher reply grounded in the conversation and optional RAG context.
+     * {@link PromptInjectionGuard} runs before the model and its tools.
      *
      * @param memoryId stable identifier of the conversation, used to isolate conversational memory.
      *                 On WhatsApp this is the chat id (a new id after 30 minutes of inactivity);
@@ -49,7 +51,8 @@ public interface TeacherAgent {
      * @return a multi that emits the response chunks
      */
     @SystemMessage(fromResource = "/prompts/teacher.md")
-    @UserMessage("Contexto: {context}\n\nPergunta: {prompt}")
+    @UserMessage("Contexto: {context}\n\nMensagem do estudante: {prompt}")
+    @InputGuardrails(PromptInjectionGuard.class)
     Multi<String> answer(@MemoryId String memoryId, String context, String prompt);
 
 }
