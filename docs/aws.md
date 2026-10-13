@@ -3,7 +3,7 @@
 Este guia cobre o deploy do bella em uma única instância EC2, rodando o app,
 Postgres+pgvector e Redis via Docker Compose, com HTTPS automático via Caddy.
 É a opção mais barata: sem RDS, ElastiCache ou ALB. Em produção o chat e os
-embeddings usam a API da OpenAI (`gpt-4o-mini` e `text-embedding-3-small`), o
+embeddings usam a API da OpenAI (`gpt-6-luna` e `text-embedding-3-small`), o
 mesmo esquema do modo de desenvolvimento — não é preciso rodar um LLM local
 na instância.
 
@@ -136,7 +136,7 @@ Variáveis obrigatórias em `.env`:
 - `DOMAIN` — o domínio apontado no passo 2 (ex.: `bella.example.com`)
 - `ACME_EMAIL` — e-mail usado pelo Caddy no registro do Let's Encrypt
 - `POSTGRES_PASSWORD` — senha forte para o banco (compartilhado entre `bella` e `orion-users`)
-- `OPENAI_API_KEY` — modelo de chat (`gpt-4o-mini`) e embeddings (`text-embedding-3-small`) em produção; gere em
+- `OPENAI_API_KEY` — modelo de chat (`gpt-6-luna`) e embeddings (`text-embedding-3-small`) em produção; gere em
   [platform.openai.com](https://platform.openai.com/api-keys)
 - `VITE_ORION_USERS_URL` — **`https://<DOMAIN>/orion-users`** (mesmo domínio/TLS do app,
   ver `Caddyfile`). Precisa do valor final de `DOMAIN` já definido, pois é embutido no

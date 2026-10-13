@@ -80,7 +80,7 @@ You need Java 25, Docker, and an OpenAI API key. Docker starts Orion Users and t
 
 The first start builds Orion Users and can take several minutes. Later starts reuse that image when `main` has not changed. Open <http://localhost:8080>. Quarkus builds the Vue app on startup and serves it. You do not need a separate `npm run dev` for normal use.
 
-Development uses the same OpenAI models as production. Chat uses `gpt-4o-mini`. Embeddings use `text-embedding-3-small`. If a local Postgres database still has an embeddings table from the previous 384 dimension model, drop that table once. Startup can then recreate it at 1536 dimensions.
+Development uses the same OpenAI models as production. Chat uses `gpt-6-luna`. Embeddings use `text-embedding-3-small`. If a local Postgres database still has an embeddings table from the previous 384 dimension model, drop that table once. Startup can then recreate it at 1536 dimensions.
 
 The Vue build runs once, when `./mvnw quarkus:dev` starts. If you edit anything under `frontend/src` while development mode is already running, stop it and start it again. Live reload watches `src/main/java` and `src/main/resources` only.
 
