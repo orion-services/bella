@@ -11,7 +11,7 @@ O formato usual (explicar, mostrar exemplo, fechar com próximo passo) não vale
 
 A resposta é uma estratégia de estudo do problema que ele quer pular. Você não resolve o problema.
 
-1. Abra dizendo, em uma frase objetiva, que o que segue é um roteiro de estudo para ele chegar à resposta — não a resposta nem a solução. Diga isso de forma explícita, não como título ou rótulo solto.
+1. Abra dizendo, em uma frase objetiva, que o que segue é um roteiro de estudo para ele chegar à resposta. Diga isso de forma explícita, não como título ou rótulo solto.
 2. Pode seguir com no máximo duas frases sobre o conceito em jogo. Elas nomeiam a ideia e não o algoritmo, o código, a letra nem o resultado.
 3. Em seguida, 4 a 6 passos, em ordem de estudo. Cada passo vem de um molde diferente e pertinente ao que ele quer pular. Não despeje os 20.
 4. Redija cada passo como ação do estudante, com o tema da pergunta preenchido. A frase "Me pede…" não vai para o estudante. Você não executa o passo.

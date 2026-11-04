@@ -53,7 +53,9 @@ The program corpus currently holds one local file, [ppc-sistemas-para-internet.m
 
 ### Discipline corpus
 
-The discipline corpus is scraped from [cpw2.rpmhub.dev](https://cpw2.rpmhub.dev) and stored as Markdown:
+The discipline corpus is scraped from [cpw2.rpmhub.dev](https://cpw2.rpmhub.dev) and stored as Markdown. The list follows the course menu.
+
+JavaScript básico:
 
 - [Introdução](https://cpw2.rpmhub.dev/introducao/introducao.html)
 - [Variáveis](https://cpw2.rpmhub.dev/variaveis/variaveis.html)
@@ -63,7 +65,30 @@ The discipline corpus is scraped from [cpw2.rpmhub.dev](https://cpw2.rpmhub.dev)
 - [Funções](https://cpw2.rpmhub.dev/funcoes/funcoes.html)
 - [DOM](https://cpw2.rpmhub.dev/dom/dom.html)
 - [AJAX](https://cpw2.rpmhub.dev/ajax/ajax.html)
-- [Simulados](https://cpw2.rpmhub.dev/exercicios/simulados.html)
+
+Frameworks:
+
+- [Promise](https://cpw2.rpmhub.dev/promise/promise.html)
+- [Vue](https://cpw2.rpmhub.dev/vuejs/vuejs.html)
+- [Componentes](https://cpw2.rpmhub.dev/vuejs/components.html)
+- [Exercícios de Vue](https://cpw2.rpmhub.dev/exercicios/vue.html)
+
+Conceitos transversais:
+
+- [Orientação a objetos](https://cpw2.rpmhub.dev/objetos/objeto.html)
+- [Web Storage](https://cpw2.rpmhub.dev/web-storage/web-storage.html)
+
+Simulados:
+
+- [Simulado da 1ª parte](https://cpw2.rpmhub.dev/exercicios/simulados.html)
+- [Exercícios da 1ª avaliação](https://cpw2.rpmhub.dev/exercicios/indice-1a-avaliacao.html)
+- [Simulado da 2ª parte](https://cpw2.rpmhub.dev/exercicios/simulados2.html)
+- [Exercícios da 2ª avaliação](https://cpw2.rpmhub.dev/exercicios/indice-2a-avaliacao.html)
+
+Estudo por projeto:
+
+- [Enunciado do projeto](https://cpw2.rpmhub.dev/projeto/enunciado.html)
+- [Rubrica de avaliação](https://cpw2.rpmhub.dev/projeto/rubrica.html)
 
 ## Running locally
 
