@@ -17,10 +17,10 @@ dezembro de 2026, então uma instância 24/7 fica sem cobrança de CPU nesse
 período. A instância usa crédito de CPU `standard`: passou da linha de base, a
 CPU desacelera, em vez de gerar cobrança de crédito extra. Depois do trial, a
 mesma máquina fica em torno de US$ 20/mês sob demanda (ou cerca de US$ 11/mês
-com Reserved de 1 ano). Os 30 GiB de EBS gp3 (20 GiB de root + 10 GiB de
-dados) ficam em torno de US$ 3 a 4/mês. O IPv4 público em uso custa cerca de
+com Reserved de 1 ano). Os 50 GiB de EBS gp3 (20 GiB de root + 30 GiB de
+dados) ficam em torno de US$ 5 a 7/mês. O IPv4 público em uso custa cerca de
 US$ 0,005/hora (~US$ 3,60/mês), associado ou não a um Elastic IP. Piso com o
-site no ar o tempo todo, até o fim de 2026: disco + IPv4, cerca de US$ 7/mês.
+site no ar o tempo todo, até o fim de 2026: disco + IPv4, cerca de US$ 9/mês.
 
 ## Pré-requisitos
 
@@ -70,7 +70,7 @@ Isso cria, em `sa-east-1`:
 - Security Group com apenas as portas 80 e 443 abertas (sem porta 22 — acesso administrativo via SSM)
 - IAM role com a policy `AmazonSSMManagedInstanceCore` (acesso via Session Manager) e permissão de leitura somente no parâmetro `/bella/github-runner-pat`
 - Runner self-hosted do GitHub Actions (label `bella-prod`) instalado como serviço em `/opt/actions-runner`
-- Volume EBS extra (10 GiB) para dados do Postgres/Redis e para as imagens Docker
+- Volume EBS extra (30 GiB) para dados do Postgres/Redis e para as imagens Docker
 - Elastic IP associado à instância
 
 Ao final, anote os outputs:

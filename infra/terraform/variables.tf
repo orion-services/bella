@@ -31,11 +31,11 @@ variable "root_volume_size_gb" {
 variable "data_volume_size_gb" {
   description = <<-EOT
     Size (GiB) of the extra EBS data volume. Mounted at /data by user_data.sh and
-    used for Postgres, Redis and Docker's data-root (image build cache). 10 GiB
-    is the practical floor; smaller fills up on the first deploy.
+    used for Postgres, Redis and Docker's data-root (image build cache). 30 GiB
+    leaves room for a full image rebuild; 10 GiB fills up after a few deploys.
   EOT
   type        = number
-  default     = 10
+  default     = 30
 }
 
 variable "data_volume_type" {
